@@ -1,6 +1,5 @@
 use libc;
-use std::{os::unix::prelude::AsRawFd, ptr::null_mut};
-use thiserror::Error;
+use std::os::unix::prelude::AsRawFd;
 
 // TODO possibly do without libc?
 
