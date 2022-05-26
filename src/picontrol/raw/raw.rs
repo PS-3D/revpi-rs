@@ -7,6 +7,7 @@ use thiserror::Error;
 pub const REV_PI_DEV_FIRST_RIGHT: usize = 32;
 pub const REV_PI_DEV_CNT_MAX: usize = 64;
 pub const REV_PI_ERROR_MSG_LEN: usize = 256;
+pub const KB_PI_LEN: usize = 4096;
 
 #[allow(non_snake_case)]
 #[derive(Debug, Default)]
@@ -131,103 +132,72 @@ enum KBRequests {
     WaitForEvent = 0x4b32,
 }
 
-#[derive(Debug, Error)]
-pub enum PiControlRawError {
-    #[error("either request or argp were invalid")]
-    InvalidArgument,
-    #[error("request does not apply to object type fd refers to")]
-    WrongObjectType,
-    #[error("Device with address {0} not found")]
-    DeviceNotFound(u8),
-    #[error("Argument was too large")]
-    TooLarge,
-    #[error("was other, non-specified error: {0}")]
-    Other(i32),
-}
+pub type RawRawResult = Result<u32, i32>;
 
-pub type PiControlRawResult<T> = Result<T, PiControlRawError>;
-
-unsafe fn ioctl<F: AsRawFd, T: ?Sized>(
-    fd: F,
-    request: KBRequests,
-    argp: *mut T,
-) -> PiControlRawResult<u32> {
+unsafe fn ioctl<F: AsRawFd, T>(fd: F, request: KBRequests, argp: T) -> RawRawResult {
     let res = libc::ioctl(fd.as_raw_fd(), request as libc::c_ulong, argp);
     if res <= -1 {
-        match *libc::__errno_location() {
-            libc::EBADF => panic!("{} was not a valid file descriptor", fd.as_raw_fd()),
-            libc::EFAULT => panic!("argp pointed to an inaccessible memory area"),
-            libc::EINVAL => Err(PiControlRawError::InvalidArgument),
-            libc::ENOTTY => Err(PiControlRawError::WrongObjectType),
-            _ => Err(PiControlRawError::Other(*libc::__errno_location())),
-        }
+        Err(*libc::__errno_location())
     } else {
         Ok(res as u32)
     }
 }
 
-pub unsafe fn reset<F: AsRawFd>(fd: F) -> PiControlRawResult<()> {
-    ioctl::<F, u8>(fd, KBRequests::Reset, null_mut()).map(|_| ())
+pub unsafe fn reset<F: AsRawFd>(fd: F) -> RawRawResult {
+    ioctl(fd, KBRequests::Reset, 0u64)
 }
 
-pub unsafe fn get_device_info_list<F: AsRawFd>(
-    fd: F,
-    devs: *mut SDeviceInfo,
-) -> PiControlRawResult<u32> {
+pub unsafe fn get_device_info_list<F: AsRawFd>(fd: F, devs: *mut SDeviceInfo) -> RawRawResult {
     ioctl(fd, KBRequests::GetDeviceInfoList, devs)
 }
 
 // TODO by module type of this? see manuam
-pub unsafe fn get_device_info<F: AsRawFd>(fd: F, dev: *mut SDeviceInfo) -> PiControlRawResult<()> {
-    ioctl(fd, KBRequests::GetDeviceInfo, dev).map(|_| ())
+pub unsafe fn get_device_info<F: AsRawFd>(fd: F, dev: *mut SDeviceInfo) -> RawRawResult {
+    ioctl(fd, KBRequests::GetDeviceInfo, dev)
 }
 
 // In theory this could be safe since the piControl module checks whether the
 // index is inside the bounds, but nevertheless, we could read at any random
 // point, interpreting the value in a certain way, which also makes this sorta
 // unsafe
-pub unsafe fn get_value<F: AsRawFd>(fd: F, val: *mut SPIValue) -> PiControlRawResult<()> {
-    ioctl(fd, KBRequests::GetValue, val).map(|_| ())
+pub unsafe fn get_value<F: AsRawFd>(fd: F, val: *mut SPIValue) -> RawRawResult {
+    ioctl(fd, KBRequests::GetValue, val)
 }
 
-pub unsafe fn set_value<F: AsRawFd>(fd: F, val: *mut SPIValue) -> PiControlRawResult<()> {
-    ioctl(fd, KBRequests::SetValue, val).map(|_| ())
+pub unsafe fn set_value<F: AsRawFd>(fd: F, val: *mut SPIValue) -> RawRawResult {
+    ioctl(fd, KBRequests::SetValue, val)
 }
 
-pub unsafe fn find_variable<F: AsRawFd>(fd: F, var: *mut SPIVariable) -> PiControlRawResult<()> {
-    ioctl(fd, KBRequests::FindVariable, var).map(|_| ())
+pub unsafe fn find_variable<F: AsRawFd>(fd: F, var: *mut SPIVariable) -> RawRawResult {
+    ioctl(fd, KBRequests::FindVariable, var)
 }
 
 // image.len() must be the same as processimage length
-pub unsafe fn set_exported_outputs<F: AsRawFd>(fd: F, image: &mut [u8]) -> PiControlRawResult<()> {
-    ioctl(fd, KBRequests::SetExportedOutputs, image).map(|_| ())
+pub unsafe fn set_exported_outputs<F: AsRawFd>(fd: F, image: *mut u8) -> RawRawResult {
+    ioctl(fd, KBRequests::SetExportedOutputs, image)
 }
 
-pub fn update_device_firmware<F: AsRawFd>(fd: F, module: u32) -> PiControlRawResult<()> {
-    todo!();
-    //unsafe { ioctl(fd, KBRequests::UpdateDeviceFirmware, module) }.map(|_| ())
+pub unsafe fn update_device_firmware<F: AsRawFd>(fd: F, module: u32) -> RawRawResult {
+    ioctl(fd, KBRequests::UpdateDeviceFirmware, module)
 }
 
 // dio_address must be valid
-pub unsafe fn dio_reset_counter<F: AsRawFd>(
-    fd: F,
-    ctr: *mut SDIOResetCounter,
-) -> PiControlRawResult<()> {
-    ioctl(fd, KBRequests::DIOResetCounter, ctr).map(|_| ())
+pub unsafe fn dio_reset_counter<F: AsRawFd>(fd: F, ctr: *mut SDIOResetCounter) -> RawRawResult {
+    ioctl(fd, KBRequests::DIOResetCounter, ctr)
 }
 
-pub unsafe fn get_last_message<F: AsRawFd>(fd: F, msg: *mut i8) -> PiControlRawResult<()> {
-    ioctl(fd, KBRequests::GetLastMessage, msg).map(|_| ())
+pub unsafe fn get_last_message<F: AsRawFd>(fd: F, msg: *mut i8) -> RawRawResult {
+    ioctl(fd, KBRequests::GetLastMessage, msg)
 }
 
-pub unsafe fn stop_io<F: AsRawFd>(fd: F, stop: *mut i32) -> PiControlRawResult<()> {
-    ioctl(fd, KBRequests::StopIO, stop).map(|_| ())
+pub unsafe fn stop_io<F: AsRawFd>(fd: F, stop: *mut i32) -> RawRawResult {
+    ioctl(fd, KBRequests::StopIO, stop)
 }
 
-pub unsafe fn set_output_watchdog<F: AsRawFd>(fd: F, millis: *mut u32) -> PiControlRawResult<()> {
-    ioctl(fd, KBRequests::SetOutputWatchdog, millis).map(|_| ())
+pub unsafe fn set_output_watchdog<F: AsRawFd>(fd: F, millis: *mut u32) -> RawRawResult {
+    ioctl(fd, KBRequests::SetOutputWatchdog, millis)
 }
 
-pub unsafe fn wait_for_event<F: AsRawFd>(fd: F, event: *mut i32) -> PiControlRawResult<()> {
-    ioctl(fd, KBRequests::WaitForEvent, event).map(|_| ())
+pub unsafe fn wait_for_event<F: AsRawFd>(fd: F, event: *mut i32) -> RawRawResult {
+    ioctl(fd, KBRequests::WaitForEvent, event)
 }
