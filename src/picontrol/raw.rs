@@ -14,8 +14,8 @@ use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum PiControlRawError {
-    #[error("either request or argp were invalid")]
-    InvalidArgument,
+    #[error("{0} was invalid")]
+    InvalidArgument(&'static str),
     #[error("Device with address {0} not found")]
     DeviceNotFound(u8),
     #[error("No variable entries")]
@@ -102,7 +102,7 @@ impl PiControlRaw {
     ) -> Result<SPIValue, PiControlRawError> {
         ensure!(
             (address as usize) < KB_PI_LEN,
-            PiControlRawError::InvalidArgument
+            PiControlRawError::InvalidArgument("address")
         );
         let mut val = SPIValue {
             i16uAddress: address,
@@ -125,7 +125,7 @@ impl PiControlRaw {
     ) -> Result<(), PiControlRawError> {
         ensure!(
             (address as usize) < KB_PI_LEN,
-            PiControlRawError::InvalidArgument
+            PiControlRawError::InvalidArgument("address")
         );
         let mut val = SPIValue {
             i16uAddress: address,
@@ -141,14 +141,14 @@ impl PiControlRaw {
 
     pub fn find_variable(&self, name: &CStr) -> Result<SPIVariable, PiControlRawError> {
         let len = name.to_bytes_with_nul().len();
-        ensure!(len <= 32, PiControlRawError::InvalidArgument);
+        ensure!(len <= 32, PiControlRawError::InvalidArgument("length of name"));
         let mut var = SPIVariable::default();
         var.strVarName[0..len].copy_from_slice(name.to_bytes_with_nul());
         unsafe { raw::find_variable(self.0.as_raw_fd(), &mut var) }.map_err(|e| match e {
             libc::EFAULT => {
                 // not specified, helpful tho, see kernel module
                 if var.i16uAddress == 0xffff && var.i8uBit == 0xff && var.i16uLength == 0xffff {
-                    PiControlRawError::InvalidArgument
+                    PiControlRawError::InvalidArgument("name")
                 } else {
                     panic!("bridge wasn't running")
                 }
@@ -170,7 +170,7 @@ impl PiControlRaw {
         bitfield: u16,
     ) -> Result<(), PiControlRawError> {
         // this is specified in the kernel module
-        ensure!(bitfield != 0, PiControlRawError::InvalidArgument);
+        ensure!(bitfield != 0, PiControlRawError::InvalidArgument("bitfield"));
         let mut ctr = SDIOResetCounter {
             i8uAddress: dio_address,
             i16uBitfield: bitfield,
@@ -178,7 +178,7 @@ impl PiControlRaw {
         unsafe { raw::dio_reset_counter(self.0.as_raw_fd(), &mut ctr) }.map_err(|e| match e {
             libc::EFAULT => panic!("bridge wasn't running"),
             libc::EPERM => panic!("this isn't a revpi core or connect"),
-            libc::EINVAL => PiControlRawError::InvalidArgument,
+            libc::EINVAL => PiControlRawError::InvalidArgument("dio_address"),
             _ => unreachable!(),
         })?;
         Ok(())
