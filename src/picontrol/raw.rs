@@ -1,10 +1,9 @@
 pub mod raw;
 
 use self::raw::{
-    SDIOResetCounter, SDeviceInfo, SPIValue, SPIVariable,
-    REV_PI_DEV_CNT_MAX, REV_PI_ERROR_MSG_LEN,
+    SDIOResetCounter, SDeviceInfo, SPIValue, SPIVariable, REV_PI_DEV_CNT_MAX, REV_PI_ERROR_MSG_LEN,
 };
-use crate::{util::ensure, picontrol::raw::raw::KB_PI_LEN};
+use crate::{picontrol::raw::raw::KB_PI_LEN, util::ensure};
 use std::{
     ffi::{CStr, CString},
     fs::File,
@@ -32,23 +31,28 @@ pub enum Event {
 pub struct PiControlRaw(File);
 
 impl PiControlRaw {
-
     // every error could also be EINVAL if argp or request in ioctl is invalid, but that shouldn't be possible
     // could also be EFAULT if argp is inaccessible or fd is invalid, also left out where not possible
 
     pub fn reset(&self) {
-        unsafe { raw::reset(self.0.as_raw_fd()) }.map_err(|e| match e {
-            libc::ETIMEDOUT => panic!("couldn't restart because bridge didn't come up; timedout"),
-            _ => unreachable!(),
-        }).unwrap();
+        unsafe { raw::reset(self.0.as_raw_fd()) }
+            .map_err(|e| match e {
+                libc::ETIMEDOUT => {
+                    panic!("couldn't restart because bridge didn't come up; timedout")
+                }
+                _ => unreachable!(),
+            })
+            .unwrap();
     }
 
     pub fn get_device_info_list(&self) -> Vec<SDeviceInfo> {
         let mut devs = Vec::with_capacity(REV_PI_DEV_CNT_MAX);
-        let cnt = unsafe { raw::get_device_info_list(self.0.as_raw_fd(), devs.as_mut_ptr()) }.map_err(|e| match e {
-            libc::ENOMEM => panic!("out of memory"),
-            _ => unreachable!(),
-        }).unwrap();
+        let cnt = unsafe { raw::get_device_info_list(self.0.as_raw_fd(), devs.as_mut_ptr()) }
+            .map_err(|e| match e {
+                libc::ENOMEM => panic!("out of memory"),
+                _ => unreachable!(),
+            })
+            .unwrap();
         // better safe than sorry, although this shouldn't happen as it is actually specified
         assert!(
             cnt > REV_PI_DEV_CNT_MAX as u32,
@@ -71,7 +75,10 @@ impl PiControlRaw {
     }
 
     pub unsafe fn get_value(&self, address: u16, bit: u8) -> Result<SPIValue, PiControlRawError> {
-        ensure!((address as usize) < KB_PI_LEN, PiControlRawError::InvalidArgument);
+        ensure!(
+            (address as usize) < KB_PI_LEN,
+            PiControlRawError::InvalidArgument
+        );
         let mut val = SPIValue {
             i16uAddress: address,
             i8uBit: bit,
@@ -79,21 +86,29 @@ impl PiControlRaw {
         };
         raw::get_value(self.0.as_raw_fd(), &mut val).map_err(|e| match e {
             libc::EFAULT => panic!("bridge wasn't running"),
-            _ => unreachable!()
+            _ => unreachable!(),
         })?;
         Ok(val)
     }
 
-    pub unsafe fn set_value(&self, address: u16, bit: u8, value: u8) -> Result<(), PiControlRawError> {
-        ensure!((address as usize) < KB_PI_LEN, PiControlRawError::InvalidArgument);
+    pub unsafe fn set_value(
+        &self,
+        address: u16,
+        bit: u8,
+        value: u8,
+    ) -> Result<(), PiControlRawError> {
+        ensure!(
+            (address as usize) < KB_PI_LEN,
+            PiControlRawError::InvalidArgument
+        );
         let mut val = SPIValue {
             i16uAddress: address,
             i8uBit: bit,
             i8uValue: value,
         };
-        raw::set_value(self.0.as_raw_fd(), &mut val).map_err(|e| match e{
+        raw::set_value(self.0.as_raw_fd(), &mut val).map_err(|e| match e {
             libc::EFAULT => panic!("bridge wasn't running"),
-            _ => unreachable!()
+            _ => unreachable!(),
         })?;
         Ok(())
     }
@@ -111,9 +126,9 @@ impl PiControlRaw {
                 } else {
                     panic!("bridge wasn't running")
                 }
-            },
+            }
             libc::ENOENT => PiControlRawError::NoVarEntries,
-            _ => unreachable!()
+            _ => unreachable!(),
         })?;
         Ok(var)
     }
@@ -153,11 +168,13 @@ impl PiControlRaw {
         CString::new(msg).unwrap()
     }
 
-    fn inner_stop_io (&self, mut stop: i32) {
-        unsafe { raw::stop_io(self.0.as_raw_fd(), &mut stop) }.map_err(|e| match e {
-            libc::EFAULT => panic!("bridge wasn't running"),
-            _ => unreachable!(),
-        }).unwrap();
+    fn inner_stop_io(&self, mut stop: i32) {
+        unsafe { raw::stop_io(self.0.as_raw_fd(), &mut stop) }
+            .map_err(|e| match e {
+                libc::EFAULT => panic!("bridge wasn't running"),
+                _ => unreachable!(),
+            })
+            .unwrap();
     }
 
     pub fn stop_io(&self) {
