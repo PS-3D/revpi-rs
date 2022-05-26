@@ -26,6 +26,19 @@ pub enum Event {
     Reset = 1,
 }
 
+#[repr(u8)]
+pub enum ValType {
+    Zero = 0,
+    One,
+    Two,
+    Three,
+    Four,
+    Five,
+    Six,
+    Seven,
+    Byte,
+}
+
 pub struct PiControlRaw(File);
 
 impl PiControlRaw {
@@ -74,16 +87,14 @@ impl PiControlRaw {
         Ok(dev)
     }
 
-    // TODO enum for bit index or byte
-
-    pub unsafe fn get_value(&self, address: u16, bit: u8) -> Result<SPIValue, PiControlRawError> {
+    pub unsafe fn get_value(&self, address: u16, bit: ValType) -> Result<SPIValue, PiControlRawError> {
         ensure!(
             (address as usize) < KB_PI_LEN,
             PiControlRawError::InvalidArgument
         );
         let mut val = SPIValue {
             i16uAddress: address,
-            i8uBit: bit,
+            i8uBit: bit as u8,
             i8uValue: 0,
         };
         raw::get_value(self.0.as_raw_fd(), &mut val).map_err(|e| match e {
@@ -96,7 +107,7 @@ impl PiControlRaw {
     pub unsafe fn set_value(
         &self,
         address: u16,
-        bit: u8,
+        bit: ValType,
         value: u8,
     ) -> Result<(), PiControlRawError> {
         ensure!(
@@ -105,7 +116,7 @@ impl PiControlRaw {
         );
         let mut val = SPIValue {
             i16uAddress: address,
-            i8uBit: bit,
+            i8uBit: bit as u8,
             i8uValue: value,
         };
         raw::set_value(self.0.as_raw_fd(), &mut val).map_err(|e| match e {
