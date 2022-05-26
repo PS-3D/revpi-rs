@@ -17,8 +17,6 @@ pub enum PiControlRawError {
     InvalidArgument,
     #[error("Device with address {0} not found")]
     DeviceNotFound(u8),
-    #[error("Argument was too large")]
-    TooLarge,
     #[error("No variable entries")]
     NoVarEntries,
 }
@@ -31,6 +29,8 @@ pub enum Event {
 pub struct PiControlRaw(File);
 
 impl PiControlRaw {
+    // TODO impl new
+
     // every error could also be EINVAL if argp or request in ioctl is invalid, but that shouldn't be possible
     // could also be EFAULT if argp is inaccessible or fd is invalid, also left out where not possible
 
@@ -74,6 +74,8 @@ impl PiControlRaw {
         Ok(dev)
     }
 
+    // TODO enum for bit index or byte
+
     pub unsafe fn get_value(&self, address: u16, bit: u8) -> Result<SPIValue, PiControlRawError> {
         ensure!(
             (address as usize) < KB_PI_LEN,
@@ -115,7 +117,7 @@ impl PiControlRaw {
 
     pub fn find_variable(&self, name: &CStr) -> Result<SPIVariable, PiControlRawError> {
         let len = name.to_bytes_with_nul().len();
-        ensure!(len <= 32, PiControlRawError::TooLarge);
+        ensure!(len <= 32, PiControlRawError::InvalidArgument);
         let mut var = SPIVariable::default();
         var.strVarName[0..len].copy_from_slice(name.to_bytes_with_nul());
         unsafe { raw::find_variable(self.0.as_raw_fd(), &mut var) }.map_err(|e| match e {
@@ -143,6 +145,7 @@ impl PiControlRaw {
         dio_address: u8,
         bitfield: u16,
     ) -> Result<(), PiControlRawError> {
+        ensure!(bitfield != 0, PiControlRawError::InvalidArgument);
         let mut ctr = SDIOResetCounter {
             i8uAddress: dio_address,
             i16uBitfield: bitfield,
@@ -197,3 +200,5 @@ impl PiControlRaw {
         unsafe { raw::wait_for_event(self.0.as_raw_fd(), &mut (event as i32)) }.unwrap();
     }
 }
+
+// TODO impl drop
