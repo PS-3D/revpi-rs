@@ -7,6 +7,7 @@ use crate::{picontrol::raw::raw::KB_PI_LEN, util::ensure};
 use std::{
     ffi::{CStr, CString},
     fs::File,
+    io::Error as IoError,
     os::unix::prelude::AsRawFd,
 };
 use thiserror::Error;
@@ -21,11 +22,13 @@ pub enum PiControlRawError {
     NoVarEntries,
 }
 
+#[derive(Debug)]
 #[repr(i32)]
 pub enum Event {
     Reset = 1,
 }
 
+#[derive(Debug)]
 #[repr(u8)]
 pub enum ValType {
     Zero = 0,
@@ -39,10 +42,14 @@ pub enum ValType {
     Byte,
 }
 
+#[derive(Debug)]
 pub struct PiControlRaw(File);
 
+// drop not needed, file closes automatically when out of scope
 impl PiControlRaw {
-    // TODO impl new
+    pub fn new() -> Result<Self, IoError> {
+        Ok(PiControlRaw(File::open("/dev/piControl0")?))
+    }
 
     // every error could also be EINVAL if argp or request in ioctl is invalid, but that shouldn't be possible
     // could also be EFAULT if argp is inaccessible or fd is invalid, also left out where not possible
@@ -87,7 +94,12 @@ impl PiControlRaw {
         Ok(dev)
     }
 
-    pub unsafe fn get_value(&self, address: u16, bit: ValType) -> Result<SPIValue, PiControlRawError> {
+    // unsafe due to uncertainty of address
+    pub unsafe fn get_value(
+        &self,
+        address: u16,
+        bit: ValType,
+    ) -> Result<SPIValue, PiControlRawError> {
         ensure!(
             (address as usize) < KB_PI_LEN,
             PiControlRawError::InvalidArgument
@@ -104,6 +116,7 @@ impl PiControlRaw {
         Ok(val)
     }
 
+    // unsafe due to uncertainty of address
     pub unsafe fn set_value(
         &self,
         address: u16,
@@ -156,6 +169,7 @@ impl PiControlRaw {
         dio_address: u8,
         bitfield: u16,
     ) -> Result<(), PiControlRawError> {
+        // this is specified in the kernel module
         ensure!(bitfield != 0, PiControlRawError::InvalidArgument);
         let mut ctr = SDIOResetCounter {
             i8uAddress: dio_address,
@@ -173,12 +187,12 @@ impl PiControlRaw {
     pub fn get_last_message(&self) -> CString {
         let mut msg = Vec::with_capacity(REV_PI_ERROR_MSG_LEN);
         unsafe {
-            // no error should occur
+            // no error should occur because we are responsible for all arguments
             raw::get_last_message(self.0.as_raw_fd(), msg.as_mut_ptr() as *mut i8).unwrap();
             let len = libc::strlen(msg.as_ptr() as *const i8);
             msg.set_len(len + 1);
         }
-        // Should never panic, we trust the api
+        // Should never panic, we trust the api and checked this before
         CString::new(msg).unwrap()
     }
 
@@ -211,5 +225,3 @@ impl PiControlRaw {
         unsafe { raw::wait_for_event(self.0.as_raw_fd(), &mut (event as i32)) }.unwrap();
     }
 }
-
-// TODO impl drop
