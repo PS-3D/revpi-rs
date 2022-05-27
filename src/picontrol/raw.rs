@@ -159,10 +159,19 @@ impl PiControlRaw {
         Ok(var)
     }
 
-    // left out set_exported_outputs on purpose, because why would anyone ever
-    // use that
+    // unsafe because only one process should call this
+    pub unsafe fn set_exported_outputs(&self, image: &[u8; KB_PI_LEN]) {
+        raw::set_exported_outputs(self.0.as_raw_fd(), image.as_ptr()).unwrap();
+    }
 
-    // same with update_device_firmware
+    // unsafe because device might get bricked
+    pub unsafe fn update_device_firmware(&self, module: u32) {
+        raw::update_device_firmware(self.0.as_raw_fd(), module).map_err(|e| match e {
+            libc::EFAULT => panic!("bridge wasn't running or too little or too many modules were connected"),
+            libc::EPERM => panic!("this isn't a revpi core or connect"),
+            _ => unreachable!(),
+        }).unwrap();
+    }
 
     pub fn dio_reset_counter(
         &self,

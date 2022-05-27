@@ -238,17 +238,16 @@ pub unsafe fn find_variable<F: AsRawFd>(fd: F, var: *mut SPIVariable) -> RawRawR
     ioctl(fd, KBRequests::FindVariable, var)
 }
 
-// image.len() must be the same as processimage length
 /// Replaces the whole processimage
 ///
 /// `image` must point to the new processimage. It needs to be [`KB_PI_LEN`] bytes
-/// long.\
+/// long. Currently only one process should call this ioctl.\
 /// If `image` wasn't accessible `Err(`[`libc::EFAULT`]`)` is returned.\
 /// If fd is not a valid file descriptor, `Err(`[`libc::EBADF`]`)` is returened.\
 /// If fd is not a character special device or doesn't refer to "/dev/piControl0",
 /// `Err(`[`libc::ENOTTY`]`)` is returened.\
 /// For more information see `man ioctl`, `man picontrol_ioctl` or the kernel module
-pub unsafe fn set_exported_outputs<F: AsRawFd>(fd: F, image: *mut u8) -> RawRawResult {
+pub unsafe fn set_exported_outputs<F: AsRawFd>(fd: F, image: *const u8) -> RawRawResult {
     ioctl(fd, KBRequests::SetExportedOutputs, image)
 }
 
