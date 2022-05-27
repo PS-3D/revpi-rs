@@ -1,9 +1,8 @@
-use std::{marker::PhantomData, str::FromStr, fmt::Display};
 use serde::{
     de::{Error as DeError, Visitor},
-    Deserializer,
-    Serializer,
+    Deserializer, Serializer,
 };
+use std::{fmt::Display, marker::PhantomData, str::FromStr};
 
 pub struct IVisitor<T> {
     marker: PhantomData<T>,
@@ -34,7 +33,9 @@ where
     T: FromStr,
     <T as FromStr>::Err: Display,
 {
-    deserializer.deserialize_str(IVisitor { marker: PhantomData })
+    deserializer.deserialize_str(IVisitor {
+        marker: PhantomData,
+    })
 }
 
 pub struct OptIVisitor<T> {
@@ -70,7 +71,9 @@ where
     T: FromStr,
     <T as FromStr>::Err: Display,
 {
-    deserializer.deserialize_str(OptIVisitor { marker: PhantomData })
+    deserializer.deserialize_str(OptIVisitor {
+        marker: PhantomData,
+    })
 }
 
 pub fn ser_str_i_padded_4<S, T>(i: &T, serializer: S) -> Result<S::Ok, S::Error>

@@ -1,12 +1,9 @@
 mod util;
 
-use std::collections::BTreeMap;
-use serde::{
-    Deserialize,
-    Serialize,
-};
+use self::util::{de_str_i, de_str_opt_i, ser_str_i, ser_str_i_padded_4, ser_str_opt_i};
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use self::util::{de_str_i, de_str_opt_i, ser_str_i, ser_str_opt_i, ser_str_i_padded_4};
+use std::collections::BTreeMap;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct App {
