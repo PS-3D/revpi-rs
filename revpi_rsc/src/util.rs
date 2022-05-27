@@ -1,5 +1,6 @@
 use serde::{
     de::{Error as DeError, Visitor},
+    ser::Error as SerError,
     Deserializer, Serializer,
 };
 use std::{fmt::Display, marker::PhantomData, str::FromStr};
@@ -76,12 +77,15 @@ where
     })
 }
 
-pub fn ser_str_i_padded_4<S, T>(i: &T, serializer: S) -> Result<S::Ok, S::Error>
+pub fn ser_str_i_padded_4<S>(i: &u16, serializer: S) -> Result<S::Ok, S::Error>
 where
     S: Serializer,
-    T: Display,
 {
-    serializer.serialize_str(&format!("{:0>4}", i))
+    if *i <= 9999u16 {
+        serializer.serialize_str(&format!("{:0>4}", i))
+    } else {
+        Err(SerError::custom("i must not be bigger than 9999"))
+    }
 }
 
 pub fn ser_str_i<S, T>(i: &T, serializer: S) -> Result<S::Ok, S::Error>
