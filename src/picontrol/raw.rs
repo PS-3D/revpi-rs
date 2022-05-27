@@ -189,7 +189,7 @@ impl PiControlRaw {
         unsafe {
             // no error should occur because we are responsible for all arguments
             raw::get_last_message(self.0.as_raw_fd(), msg.as_mut_ptr() as *mut i8).unwrap();
-            let len = libc::strlen(msg.as_ptr() as *const i8);
+            let len = libc::strlen(msg.as_ptr() as *const libc::c_char);
             msg.set_len(len + 1);
         }
         // Should never panic, we trust the api and checked this before
