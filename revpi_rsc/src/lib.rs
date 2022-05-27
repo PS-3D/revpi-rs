@@ -19,6 +19,8 @@
 //! println!("{:?}", rsc);
 //! ```
 
+#[cfg(test)]
+mod tests;
 mod util;
 
 use self::util::{de_str_i, de_str_opt_i, ser_str_i, ser_str_i_padded_4, ser_str_opt_i};
