@@ -7,8 +7,8 @@ use crate::{picontrol::raw::raw::KB_PI_LEN, util::ensure};
 use std::{
     ffi::{CStr, CString},
     fs::File,
-    io::Error as IoError,
-    os::unix::prelude::AsRawFd,
+    io::self,
+    os::unix::prelude::{AsRawFd, FileExt},
 };
 use thiserror::Error;
 
@@ -20,6 +20,8 @@ pub enum PiControlRawError {
     DeviceNotFound(u8),
     #[error("No variable entries")]
     NoVarEntries,
+    #[error(transparent)]
+    IoError(#[from] io::Error),
 }
 
 #[derive(Debug)]
@@ -46,7 +48,7 @@ pub struct PiControlRaw(File);
 
 // drop not needed, file closes automatically when out of scope
 impl PiControlRaw {
-    pub fn new() -> Result<Self, IoError> {
+    pub fn new() -> Result<Self, PiControlRawError> {
         Ok(PiControlRaw(File::open("/dev/piControl0")?))
     }
 
@@ -113,7 +115,7 @@ impl PiControlRaw {
         raw::get_value(self.0.as_raw_fd(), &mut val).map_err(|e| match e {
             libc::EFAULT => panic!("bridge wasn't running"),
             _ => unreachable!(),
-        })?;
+        }).unwrap();
         Ok(val.i8uValue)
     }
 
@@ -123,6 +125,20 @@ impl PiControlRaw {
 
     pub unsafe fn get_byte(&self, address: u16) -> Result<u8, PiControlRawError> {
         self.get_value(address, 8)
+    }
+
+    // don't have to ensure address is within bounds, file does that
+    pub unsafe fn get_word(&self, address: u16) -> Result<u16, PiControlRawError> {
+        let mut bytes = [0u8; 2];
+        self.0.read_exact_at(&mut bytes, address as u64)?;
+        Ok(u16::from_le_bytes(bytes))
+    }
+
+    // don't have to ensure address is within bounds, file does that
+    pub unsafe fn get_dword(&self, address: u16) -> Result<u32, PiControlRawError> {
+        let mut bytes = [0u8; 4];
+        self.0.read_exact_at(&mut bytes, address as u64)?;
+        Ok(u32::from_le_bytes(bytes))
     }
 
     // unsafe due to uncertainty of address
@@ -144,7 +160,7 @@ impl PiControlRaw {
         raw::set_value(self.0.as_raw_fd(), &mut val).map_err(|e| match e {
             libc::EFAULT => panic!("bridge wasn't running"),
             _ => unreachable!(),
-        })?;
+        }).unwrap();
         Ok(())
     }
 
@@ -154,6 +170,16 @@ impl PiControlRaw {
 
     pub unsafe fn set_byte(&self, address: u16, value: u8) -> Result<(), PiControlRawError> {
         self.set_value(address, 8, value)
+    }
+
+    // don't have to ensure address is within bounds, file does that
+    pub unsafe fn set_word(&self, address: u16, value: u16) -> Result<(), PiControlRawError> {
+        self.0.write_all_at(&value.to_le_bytes(), address as u64).map_err(PiControlRawError::from)
+    }
+
+    // don't have to ensure address is within bounds, file does that
+    pub unsafe fn set_dword(&self, address: u16, value: u32) -> Result<(), PiControlRawError> {
+        self.0.write_all_at(&value.to_le_bytes(), address as u64).map_err(PiControlRawError::from)
     }
 
     pub fn find_variable(&self, name: &CStr) -> Result<SPIVariable, PiControlRawError> {
