@@ -30,7 +30,7 @@ pub enum Event {
 
 #[derive(Debug)]
 #[repr(u8)]
-pub enum ValType {
+pub enum Bit {
     Zero = 0,
     One,
     Two,
@@ -39,7 +39,6 @@ pub enum ValType {
     Five,
     Six,
     Seven,
-    Byte,
 }
 
 #[derive(Debug)]
@@ -97,32 +96,40 @@ impl PiControlRaw {
     }
 
     // unsafe due to uncertainty of address
-    pub unsafe fn get_value(
+    unsafe fn get_value(
         &self,
         address: u16,
-        bit: ValType,
-    ) -> Result<SPIValue, PiControlRawError> {
+        bit: u8,
+    ) -> Result<u8, PiControlRawError> {
         ensure!(
             (address as usize) < KB_PI_LEN,
             PiControlRawError::InvalidArgument("address")
         );
         let mut val = SPIValue {
             i16uAddress: address,
-            i8uBit: bit as u8,
+            i8uBit: bit,
             i8uValue: 0,
         };
         raw::get_value(self.0.as_raw_fd(), &mut val).map_err(|e| match e {
             libc::EFAULT => panic!("bridge wasn't running"),
             _ => unreachable!(),
         })?;
-        Ok(val)
+        Ok(val.i8uValue)
+    }
+
+    pub unsafe fn get_bit(&self, address: u16, bit: Bit) -> Result<bool, PiControlRawError> {
+        self.get_value(address, bit as u8).map(|r| r >= 1)
+    }
+
+    pub unsafe fn get_byte(&self, address: u16) -> Result<u8, PiControlRawError> {
+        self.get_value(address, 8)
     }
 
     // unsafe due to uncertainty of address
-    pub unsafe fn set_value(
+    unsafe fn set_value(
         &self,
         address: u16,
-        bit: ValType,
+        bit: u8,
         value: u8,
     ) -> Result<(), PiControlRawError> {
         ensure!(
@@ -131,7 +138,7 @@ impl PiControlRaw {
         );
         let mut val = SPIValue {
             i16uAddress: address,
-            i8uBit: bit as u8,
+            i8uBit: bit,
             i8uValue: value,
         };
         raw::set_value(self.0.as_raw_fd(), &mut val).map_err(|e| match e {
@@ -139,6 +146,14 @@ impl PiControlRaw {
             _ => unreachable!(),
         })?;
         Ok(())
+    }
+
+    pub unsafe fn set_bit(&self, address: u16, bit: Bit, value: bool) -> Result<(), PiControlRawError> {
+        self.set_value(address, bit as u8, value as u8)
+    }
+
+    pub unsafe fn set_byte(&self, address: u16, value: u8) -> Result<(), PiControlRawError> {
+        self.set_value(address, 8, value)
     }
 
     pub fn find_variable(&self, name: &CStr) -> Result<SPIVariable, PiControlRawError> {
