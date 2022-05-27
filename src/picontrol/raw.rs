@@ -1,13 +1,14 @@
 pub mod raw;
 
 use self::raw::{
-    SDIOResetCounter, SDeviceInfo, SPIValue, SPIVariable, REV_PI_DEV_CNT_MAX, REV_PI_ERROR_MSG_LEN,
+    SDIOResetCounter, SDeviceInfo, SPIValue, SPIVariable, KB_PI_LEN, REV_PI_DEV_CNT_MAX,
+    REV_PI_ERROR_MSG_LEN,
 };
-use crate::{picontrol::raw::raw::KB_PI_LEN, util::ensure};
+use crate::util::ensure;
 use std::{
     ffi::{CStr, CString},
     fs::File,
-    io::self,
+    io,
     os::unix::prelude::{AsRawFd, FileExt},
 };
 use thiserror::Error;
@@ -98,11 +99,7 @@ impl PiControlRaw {
     }
 
     // unsafe due to uncertainty of address
-    unsafe fn get_value(
-        &self,
-        address: u16,
-        bit: u8,
-    ) -> Result<u8, PiControlRawError> {
+    unsafe fn get_value(&self, address: u16, bit: u8) -> Result<u8, PiControlRawError> {
         ensure!(
             (address as usize) < KB_PI_LEN,
             PiControlRawError::InvalidArgument("address")
@@ -112,10 +109,12 @@ impl PiControlRaw {
             i8uBit: bit,
             i8uValue: 0,
         };
-        raw::get_value(self.0.as_raw_fd(), &mut val).map_err(|e| match e {
-            libc::EFAULT => panic!("bridge wasn't running"),
-            _ => unreachable!(),
-        }).unwrap();
+        raw::get_value(self.0.as_raw_fd(), &mut val)
+            .map_err(|e| match e {
+                libc::EFAULT => panic!("bridge wasn't running"),
+                _ => unreachable!(),
+            })
+            .unwrap();
         Ok(val.i8uValue)
     }
 
@@ -142,12 +141,7 @@ impl PiControlRaw {
     }
 
     // unsafe due to uncertainty of address
-    unsafe fn set_value(
-        &self,
-        address: u16,
-        bit: u8,
-        value: u8,
-    ) -> Result<(), PiControlRawError> {
+    unsafe fn set_value(&self, address: u16, bit: u8, value: u8) -> Result<(), PiControlRawError> {
         ensure!(
             (address as usize) < KB_PI_LEN,
             PiControlRawError::InvalidArgument("address")
@@ -157,14 +151,21 @@ impl PiControlRaw {
             i8uBit: bit,
             i8uValue: value,
         };
-        raw::set_value(self.0.as_raw_fd(), &mut val).map_err(|e| match e {
-            libc::EFAULT => panic!("bridge wasn't running"),
-            _ => unreachable!(),
-        }).unwrap();
+        raw::set_value(self.0.as_raw_fd(), &mut val)
+            .map_err(|e| match e {
+                libc::EFAULT => panic!("bridge wasn't running"),
+                _ => unreachable!(),
+            })
+            .unwrap();
         Ok(())
     }
 
-    pub unsafe fn set_bit(&self, address: u16, bit: Bit, value: bool) -> Result<(), PiControlRawError> {
+    pub unsafe fn set_bit(
+        &self,
+        address: u16,
+        bit: Bit,
+        value: bool,
+    ) -> Result<(), PiControlRawError> {
         self.set_value(address, bit as u8, value as u8)
     }
 
@@ -174,17 +175,24 @@ impl PiControlRaw {
 
     // don't have to ensure address is within bounds, file does that
     pub unsafe fn set_word(&self, address: u16, value: u16) -> Result<(), PiControlRawError> {
-        self.0.write_all_at(&value.to_le_bytes(), address as u64).map_err(PiControlRawError::from)
+        self.0
+            .write_all_at(&value.to_le_bytes(), address as u64)
+            .map_err(PiControlRawError::from)
     }
 
     // don't have to ensure address is within bounds, file does that
     pub unsafe fn set_dword(&self, address: u16, value: u32) -> Result<(), PiControlRawError> {
-        self.0.write_all_at(&value.to_le_bytes(), address as u64).map_err(PiControlRawError::from)
+        self.0
+            .write_all_at(&value.to_le_bytes(), address as u64)
+            .map_err(PiControlRawError::from)
     }
 
     pub fn find_variable(&self, name: &CStr) -> Result<SPIVariable, PiControlRawError> {
         let len = name.to_bytes_with_nul().len();
-        ensure!(len <= 32, PiControlRawError::InvalidArgument("length of name"));
+        ensure!(
+            len <= 32,
+            PiControlRawError::InvalidArgument("length of name")
+        );
         let mut var = SPIVariable::default();
         var.strVarName[0..len].copy_from_slice(name.to_bytes_with_nul());
         unsafe { raw::find_variable(self.0.as_raw_fd(), &mut var) }.map_err(|e| match e {
@@ -209,11 +217,15 @@ impl PiControlRaw {
 
     // unsafe because device might get bricked
     pub unsafe fn update_device_firmware(&self, module: u32) {
-        raw::update_device_firmware(self.0.as_raw_fd(), module).map_err(|e| match e {
-            libc::EFAULT => panic!("bridge wasn't running or too little or too many modules were connected"),
-            libc::EPERM => panic!("this isn't a revpi core or connect"),
-            _ => unreachable!(),
-        }).unwrap();
+        raw::update_device_firmware(self.0.as_raw_fd(), module)
+            .map_err(|e| match e {
+                libc::EFAULT => {
+                    panic!("bridge wasn't running or too little or too many modules were connected")
+                }
+                libc::EPERM => panic!("this isn't a revpi core or connect"),
+                _ => unreachable!(),
+            })
+            .unwrap();
     }
 
     pub fn dio_reset_counter(
@@ -222,7 +234,10 @@ impl PiControlRaw {
         bitfield: u16,
     ) -> Result<(), PiControlRawError> {
         // this is specified in the kernel module
-        ensure!(bitfield != 0, PiControlRawError::InvalidArgument("bitfield"));
+        ensure!(
+            bitfield != 0,
+            PiControlRawError::InvalidArgument("bitfield")
+        );
         let mut ctr = SDIOResetCounter {
             i8uAddress: dio_address,
             i16uBitfield: bitfield,
