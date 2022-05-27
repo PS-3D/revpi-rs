@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::BTreeMap;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub struct App {
     pub name: String,
     pub version: String,
@@ -15,14 +15,14 @@ pub struct App {
     pub layout: Value,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct Summary {
     pub inp_total: usize,
     pub out_total: usize,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub struct InOutMem {
     pub name: String,
     #[serde(deserialize_with = "de_str_i", serialize_with = "ser_str_i")]
@@ -39,7 +39,7 @@ pub struct InOutMem {
     pub bit_position: Option<u8>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub struct Device {
     #[serde(rename = "GUID")]
     pub guid: String,
@@ -66,7 +66,7 @@ pub struct Device {
     pub active: Option<bool>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub struct RSC {
     #[serde(rename = "App")]
     pub app: App,
