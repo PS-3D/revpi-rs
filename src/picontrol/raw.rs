@@ -54,8 +54,10 @@ impl PiControlRaw {
     // every error could also be EINVAL if argp or request in ioctl is invalid, but that shouldn't be possible
     // could also be EFAULT if argp is inaccessible or fd is invalid, also left out where not possible
 
-    pub fn reset(&self) {
-        unsafe { raw::reset(self.0.as_raw_fd()) }
+    // unsafe because you have to ensure that noone else calls another function
+    // at the same time
+    pub unsafe fn reset(&self) {
+        raw::reset(self.0.as_raw_fd())
             .map_err(|e| match e {
                 libc::ETIMEDOUT => {
                     panic!("couldn't restart because bridge didn't come up; timedout")
