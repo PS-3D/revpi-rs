@@ -1,13 +1,10 @@
 [package]
-name = "revpi"
+name = "revpi_rsc"
 version = "0.1.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-libc = "0.2.126"
-thiserror = "1.0.31"
-
-[workspace]
-members = ["revpi_macro", "revpi_rsc"]
+serde = { version = "1.0.137", features = ["derive"]}
+serde_json = "1.0.81"
