@@ -347,7 +347,7 @@ pub unsafe fn set_output_watchdog<F: AsRawFd>(fd: F, millis: *mut u32) -> RawRaw
 
 /// Wait for an event from piControl
 ///
-/// `event` must point to the type of the desired event. Currently only a reset
+/// Writes the event that happened into `event`. Currently only a reset
 /// of the driver is supported.\
 /// This is a blocking call.
 ///

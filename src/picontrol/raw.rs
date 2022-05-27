@@ -424,7 +424,13 @@ impl PiControlRaw {
     /// Blocks until an event occurs in the piControl driver.
     ///
     /// Returns the event.
-    pub fn wait_for_event(&self, event: Event) {
-        unsafe { raw::wait_for_event(self.0.as_raw_fd(), &mut (event as i32)) }.unwrap();
+    pub fn wait_for_event(&self) -> Event {
+        let mut event = 0i32;
+        unsafe { raw::wait_for_event(self.0.as_raw_fd(), &mut event) }.unwrap();
+        // TODO from primitive
+        match event {
+            1 => Event::Reset,
+            _ => panic!("an unspecified event occured"),
+        }
     }
 }
