@@ -9,7 +9,7 @@
 //! Every struct implements the [`Serialize`] and [`Deserialize`] trait from
 //! [Serde](https://serde.rs/). This means the config can easily be read in from
 //! e.g. a rsc file, using [`serde_json`]
-//! ```
+//! ```no_run
 //! use revpi_rsc::RSC;
 //! use serde_json;
 //! use std::fs::File;
