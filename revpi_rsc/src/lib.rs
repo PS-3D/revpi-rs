@@ -23,8 +23,8 @@
 mod tests;
 mod util;
 
-use self::util::{de_str_i, de_str_opt_i, ser_str_i, ser_str_i_padded_4, ser_str_opt_i};
-use serde::{Deserialize, Serialize};
+use self::util::{de_str_i, de_str_opt_i, ser_str_i};
+use serde::{Deserialize, Serialize, ser::{SerializeTuple, Error as SerError}};
 use serde_json::Value;
 use std::collections::BTreeMap;
 
@@ -68,29 +68,57 @@ pub struct Summary {
 ///
 /// That means this is a struct for ID C.13, C.14 and C.15 in the
 /// [documentation](https://revolutionpi.de/tabellarische-auflistung-aller-json-attribute-einer-rsc-datei/)
-#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
+#[derive(Debug, Deserialize, Clone, PartialEq)]
 pub struct InOutMem {
     /// IDs C13.2, C14.2 and C15.2
     pub name: String,
     /// IDs C13.3, C14.3 and C15.3
-    #[serde(deserialize_with = "de_str_i", serialize_with = "ser_str_i")]
+    #[serde(deserialize_with = "de_str_i")]
     pub default: u64,
     /// IDs C13.4, C14.4 and C15.4
-    #[serde(deserialize_with = "de_str_i", serialize_with = "ser_str_i")]
+    #[serde(deserialize_with = "de_str_i")]
     pub bit_length: u8,
     /// IDs C13.5, C14.5 and C15.5
-    #[serde(deserialize_with = "de_str_i", serialize_with = "ser_str_i")]
+    #[serde(deserialize_with = "de_str_i")]
     pub offset: u64,
     /// IDs C13.6, C14.6 and C15.6
     pub exported: bool,
     /// IDs C13.7, C14.7 and C15.7
-    #[serde(deserialize_with = "de_str_i", serialize_with = "ser_str_i_padded_4")]
+    #[serde(deserialize_with = "de_str_i")]
     pub sort_pos: u16,
     /// IDs C13.8, C14.8 and C15.8
     pub comment: String,
     /// IDs C13.9, C14.9 and C15.9
-    #[serde(deserialize_with = "de_str_opt_i", serialize_with = "ser_str_opt_i")]
+    #[serde(deserialize_with = "de_str_opt_i")]
     pub bit_position: Option<u8>,
+}
+
+impl Serialize for InOutMem {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        let mut tup = serializer.serialize_tuple(8)?;
+        tup.serialize_element(&self.name)?;
+        tup.serialize_element(&format!("{}", self.default))?;
+        tup.serialize_element(&format!("{}", self.bit_length))?;
+        tup.serialize_element(&format!("{}", self.offset))?;
+        tup.serialize_element(&self.exported)?;
+        // We don't know what happens if there are more than 4 digits, so we don't
+        // allow it
+        if self.sort_pos <= 9999u16 {
+            tup.serialize_element(&format!("{:0>4}", self.sort_pos))?;
+        } else {
+            return Err(SerError::custom("i must not be bigger than 9999"));
+        }
+        tup.serialize_element(&self.comment)?;
+        if let Some(bp) = self.bit_position {
+            tup.serialize_element(&format!("{}", bp))?;
+        } else {
+            tup.serialize_element("")?;
+        }
+        tup.end()
+    }
 }
 
 /// Representing a singular device
@@ -143,14 +171,12 @@ pub struct Device {
 
 /// Struct of the whole RSC file
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
+#[serde(rename_all = "PascalCase")]
 pub struct RSC {
     /// ID A
-    #[serde(rename = "App")]
     pub app: App,
     /// ID B
-    #[serde(rename = "Summary")]
     pub summary: Summary,
     /// ID C
-    #[serde(rename = "Devices")]
     pub devices: Vec<Device>,
 }
