@@ -1,4 +1,4 @@
-use super::{App, Summary, InOutMem, Device};
+use super::{App, Device, InOutMem, Summary};
 use std::collections::BTreeMap;
 
 #[test]
@@ -123,26 +123,32 @@ fn inoutmem_ser_none() {
 fn device_de() {
     let device_json = r#"{"GUID":"80941337-4242-beed-aaaa-d9df13376969","id":"device_RevPiCore_20220123_4_5_006","type":"BASE","productType":"95","position":"0","name":"RevPi Core/3/3+/S","bmk":"RevPi Core/3/3+/S","inpVariant":0,"outVariant":0,"comment":"This is a RevPiCore Device","offset":42,"inp":{"0":["a","0","8","0",true,"0000","",""],"1":["b","0","8","1",true,"0001","",""]},"out":{},"mem":{},"extend":{}}"#;
     let mut inputs = BTreeMap::new();
-    inputs.insert(0, InOutMem {
-        name: "a".to_string(),
-        default: 0,
-        bit_length: 8,
-        offset: 0,
-        exported: true,
-        sort_pos: 0,
-        comment: "".to_string(),
-        bit_position: None,
-    });
-    inputs.insert(1, InOutMem {
-        name: "b".to_string(),
-        default: 0,
-        bit_length: 8,
-        offset: 1,
-        exported: true,
-        sort_pos: 1,
-        comment: "".to_string(),
-        bit_position: None,
-    });
+    inputs.insert(
+        0,
+        InOutMem {
+            name: "a".to_string(),
+            default: 0,
+            bit_length: 8,
+            offset: 0,
+            exported: true,
+            sort_pos: 0,
+            comment: "".to_string(),
+            bit_position: None,
+        },
+    );
+    inputs.insert(
+        1,
+        InOutMem {
+            name: "b".to_string(),
+            default: 0,
+            bit_length: 8,
+            offset: 1,
+            exported: true,
+            sort_pos: 1,
+            comment: "".to_string(),
+            bit_position: None,
+        },
+    );
     let reference = Device {
         guid: "80941337-4242-beed-aaaa-d9df13376969".to_string(),
         id: "device_RevPiCore_20220123_4_5_006".to_string(),
@@ -169,26 +175,32 @@ fn device_de() {
 fn device_ser() {
     let reference = r#"{"GUID":"80941337-4242-beed-aaaa-d9df13376969","id":"device_RevPiCore_20220123_4_5_006","type":"BASE","productType":"95","position":"0","name":"RevPi Core/3/3+/S","bmk":"RevPi Core/3/3+/S","inpVariant":0,"outVariant":0,"comment":"This is a RevPiCore Device","offset":42,"inp":{"0":["a","0","8","0",true,"0000","",""],"1":["b","0","8","1",true,"0001","",""]},"out":{},"mem":{},"extend":{}}"#;
     let mut inputs = BTreeMap::new();
-    inputs.insert(0, InOutMem {
-        name: "a".to_string(),
-        default: 0,
-        bit_length: 8,
-        offset: 0,
-        exported: true,
-        sort_pos: 0,
-        comment: "".to_string(),
-        bit_position: None,
-    });
-    inputs.insert(1, InOutMem {
-        name: "b".to_string(),
-        default: 0,
-        bit_length: 8,
-        offset: 1,
-        exported: true,
-        sort_pos: 1,
-        comment: "".to_string(),
-        bit_position: None,
-    });
+    inputs.insert(
+        0,
+        InOutMem {
+            name: "a".to_string(),
+            default: 0,
+            bit_length: 8,
+            offset: 0,
+            exported: true,
+            sort_pos: 0,
+            comment: "".to_string(),
+            bit_position: None,
+        },
+    );
+    inputs.insert(
+        1,
+        InOutMem {
+            name: "b".to_string(),
+            default: 0,
+            bit_length: 8,
+            offset: 1,
+            exported: true,
+            sort_pos: 1,
+            comment: "".to_string(),
+            bit_position: None,
+        },
+    );
     let device = Device {
         guid: "80941337-4242-beed-aaaa-d9df13376969".to_string(),
         id: "device_RevPiCore_20220123_4_5_006".to_string(),

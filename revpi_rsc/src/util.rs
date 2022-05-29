@@ -1,6 +1,5 @@
 use serde::{
     de::{Error as DeError, Visitor},
-    ser::Error as SerError,
     Deserializer, Serializer,
 };
 use std::{fmt::Display, marker::PhantomData, str::FromStr};
@@ -89,4 +88,3 @@ where
 {
     serializer.serialize_str(&format!("{}", i))
 }
-

@@ -24,7 +24,10 @@ mod tests;
 mod util;
 
 use self::util::{de_str_i, de_str_opt_i, ser_str_i};
-use serde::{Deserialize, Serialize, ser::{SerializeTuple, Error as SerError}};
+use serde::{
+    ser::{Error as SerError, SerializeTuple},
+    Deserialize, Serialize,
+};
 use serde_json::Value;
 use std::collections::BTreeMap;
 
