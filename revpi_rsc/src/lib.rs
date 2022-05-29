@@ -166,6 +166,7 @@ pub struct Device {
     /// Lower layers are omitted due to there being no documentation for them
     pub extend: Value,
     /// has no id
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub active: Option<bool>,
 }
 
