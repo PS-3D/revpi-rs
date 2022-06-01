@@ -38,7 +38,7 @@ use std::collections::BTreeMap;
 /// Representing the app
 ///
 /// That means this is a struct for ID A in the [documentation](https://revolutionpi.de/tabellarische-auflistung-aller-json-attribute-einer-rsc-datei/)
-#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
 pub struct App {
     /// ID A.1
     pub name: String,
@@ -58,7 +58,7 @@ pub struct App {
 /// Representing the summary
 ///
 /// That means this is a struct for ID B in the [documentation](https://revolutionpi.de/tabellarische-auflistung-aller-json-attribute-einer-rsc-datei/)
-#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct Summary {
     /// ID B.1
@@ -71,7 +71,7 @@ pub struct Summary {
 ///
 /// That means this is a struct for ID C.13, C.14 and C.15 in the
 /// [documentation](https://revolutionpi.de/tabellarische-auflistung-aller-json-attribute-einer-rsc-datei/)
-#[derive(Debug, Deserialize, Clone, PartialEq)]
+#[derive(Debug, Deserialize, Clone, PartialEq, Eq)]
 pub struct InOutMem {
     /// IDs C13.2, C14.2 and C15.2
     pub name: String,
@@ -127,7 +127,7 @@ impl Serialize for InOutMem {
 /// Representing a singular device
 ///
 /// That means this is a struct for section C in the [documentation](https://revolutionpi.de/tabellarische-auflistung-aller-json-attribute-einer-rsc-datei/)
-#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
 pub struct Device {
     /// ID C.2
     #[serde(rename = "GUID")]
@@ -174,7 +174,7 @@ pub struct Device {
 }
 
 /// Struct of the whole RSC file
-#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
 #[serde(rename_all = "PascalCase")]
 pub struct RSC {
     /// ID A
