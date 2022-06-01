@@ -13,7 +13,6 @@ use crate::util::ensure;
 use std::{
     ffi::{CStr, CString},
     fs::File,
-    io,
     os::unix::prelude::{AsRawFd, FileExt},
 };
 
@@ -292,10 +291,7 @@ impl PiControlRaw {
     /// Will panic if the bridge wasn't running
     pub fn find_variable(&self, name: &CStr) -> Result<SPIVariable, PiControlError> {
         let len = name.to_bytes_with_nul().len();
-        ensure!(
-            len <= 32,
-            PiControlError::InvalidArgument("length of name")
-        );
+        ensure!(len <= 32, PiControlError::InvalidArgument("length of name"));
         let mut var = SPIVariable::default();
         var.strVarName[0..len].copy_from_slice(name.to_bytes_with_nul());
         unsafe { raw::find_variable(self.0.as_raw_fd(), &mut var) }.map_err(|e| match e {
@@ -354,16 +350,9 @@ impl PiControlRaw {
     /// # Panics
     /// Will panic if the RevPi is not a RevPi Core or RevPi Connect, or if the
     /// bridge wasn't running.
-    pub fn dio_reset_counter(
-        &self,
-        dio_address: u8,
-        bitfield: u16,
-    ) -> Result<(), PiControlError> {
+    pub fn dio_reset_counter(&self, dio_address: u8, bitfield: u16) -> Result<(), PiControlError> {
         // this is specified in the kernel module
-        ensure!(
-            bitfield != 0,
-            PiControlError::InvalidArgument("bitfield")
-        );
+        ensure!(bitfield != 0, PiControlError::InvalidArgument("bitfield"));
         let mut ctr = SDIOResetCounter {
             i8uAddress: dio_address,
             i16uBitfield: bitfield,
