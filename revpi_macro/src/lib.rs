@@ -110,9 +110,9 @@ fn from_json(rsc: &RSC, name: Ident) -> TokenStream2 {
     }
     impl #name {
         pub fn new() -> Result<Self, revpi::picontrol::raw::PiControlRawError> {
-            Self {
+            Ok(Self {
                 inner: revpi::picontrol::raw::PiControlRaw::new()?,
-            }
+            })
         }
 
         #functions
