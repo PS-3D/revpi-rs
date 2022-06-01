@@ -8,6 +8,7 @@ use self::raw::{
     SDIOResetCounter, SDeviceInfo, SPIValue, SPIVariable, KB_PI_LEN, REV_PI_DEV_CNT_MAX,
     REV_PI_ERROR_MSG_LEN,
 };
+use super::PiControlError;
 use crate::util::ensure;
 use std::{
     ffi::{CStr, CString},
@@ -15,26 +16,6 @@ use std::{
     io,
     os::unix::prelude::{AsRawFd, FileExt},
 };
-use thiserror::Error;
-
-#[derive(Debug, Error)]
-pub enum PiControlRawError {
-    /// If an argument given to a method of PiControlRaw was invalid, e.g. too big
-    /// or too small
-    #[error("{0} was invalid")]
-    InvalidArgument(&'static str),
-    /// Returned by [`PiControlRaw::get_device_info`] if the requested device
-    /// wasn't found
-    #[error("Device with address {0} not found")]
-    DeviceNotFound(u8),
-    /// Returned by [`PiControlRaw::find_variable`] if there were no variable
-    /// entries at all
-    #[error("No variable entries")]
-    NoVarEntries,
-    /// Wrapper around [`io::Error`]
-    #[error(transparent)]
-    IoError(#[from] io::Error),
-}
 
 /// Events that can occur in piControl
 ///
@@ -97,8 +78,8 @@ pub struct PiControlRaw(File);
 impl PiControlRaw {
     /// Constructs a new PiControlRaw object.
     ///
-    /// Returns a [`PiControlRawError::IoError`] if opening "/dev/piControl0" fails.
-    pub fn new() -> Result<Self, PiControlRawError> {
+    /// Returns a [`PiControlError::IoError`] if opening "/dev/piControl0" fails.
+    pub fn new() -> Result<Self, PiControlError> {
         Ok(PiControlRaw(File::open("/dev/piControl0")?))
     }
 
@@ -146,23 +127,23 @@ impl PiControlRaw {
 
     /// Returns the information of the requested device.
     ///
-    /// If no device with the given address is found, [`PiControlRawError::DeviceNotFound`]
+    /// If no device with the given address is found, [`PiControlError::DeviceNotFound`]
     /// is returned.
-    pub fn get_device_info(&self, address: u8) -> Result<SDeviceInfo, PiControlRawError> {
+    pub fn get_device_info(&self, address: u8) -> Result<SDeviceInfo, PiControlError> {
         let mut dev = SDeviceInfo::default();
         dev.i8uAddress = address;
         unsafe { raw::get_device_info(self.0.as_raw_fd(), &mut dev) }.map_err(|e| match e {
-            libc::ENXIO => PiControlRawError::DeviceNotFound(address),
+            libc::ENXIO => PiControlError::DeviceNotFound(address),
             _ => unreachable!(),
         })?;
         Ok(dev)
     }
 
     // unsafe due to uncertainty of address
-    unsafe fn get_value(&self, address: u16, bit: u8) -> Result<u8, PiControlRawError> {
+    unsafe fn get_value(&self, address: u16, bit: u8) -> Result<u8, PiControlError> {
         ensure!(
             (address as usize) < KB_PI_LEN,
-            PiControlRawError::InvalidArgument("address")
+            PiControlError::InvalidArgument("address")
         );
         let mut val = SPIValue {
             i16uAddress: address,
@@ -181,24 +162,24 @@ impl PiControlRaw {
     /// Gets a bit from the processimage. You have to ensure that `address` and
     /// `bit` are valid, otherwise you might get a wrong value.
     ///
-    /// Returns [`PiControlRawError::InvalidArgument`] if `address` is larger
+    /// Returns [`PiControlError::InvalidArgument`] if `address` is larger
     /// than [`KB_PI_LEN`].
     ///
     /// # Panics
     /// Will panic if the bridge wasn't running
-    pub unsafe fn get_bit(&self, address: u16, bit: Bit) -> Result<bool, PiControlRawError> {
+    pub unsafe fn get_bit(&self, address: u16, bit: Bit) -> Result<bool, PiControlError> {
         self.get_value(address, bit as u8).map(|r| r >= 1)
     }
 
     /// Gets a byte from the processimage. You have to ensure that `address` is
     /// valid, otherwise you might get a wrong value.
     ///
-    /// Returns [`PiControlRawError::InvalidArgument`] if `address` is larger
+    /// Returns [`PiControlError::InvalidArgument`] if `address` is larger
     /// than [`KB_PI_LEN`].
     ///
     /// # Panics
     /// Will panic if the bridge wasn't running
-    pub unsafe fn get_byte(&self, address: u16) -> Result<u8, PiControlRawError> {
+    pub unsafe fn get_byte(&self, address: u16) -> Result<u8, PiControlError> {
         self.get_value(address, 8)
     }
 
@@ -206,9 +187,9 @@ impl PiControlRaw {
     /// valid, otherwise you might get a wrong value. Be aware that the value
     /// is returned in the system byteorder, while it is stored as little endian.
     ///
-    /// Returns [`PiControlRawError::IoError`] if there was an error reading
+    /// Returns [`PiControlError::IoError`] if there was an error reading
     /// the processimage.
-    pub unsafe fn get_word(&self, address: u16) -> Result<u16, PiControlRawError> {
+    pub unsafe fn get_word(&self, address: u16) -> Result<u16, PiControlError> {
         let mut bytes = [0u8; 2];
         self.0.read_exact_at(&mut bytes, address as u64)?;
         Ok(u16::from_le_bytes(bytes))
@@ -218,19 +199,19 @@ impl PiControlRaw {
     /// is valid, otherwise you might get a wrong value. Be aware that the value
     /// is returned in the system byteorder, while it is stored as little endian.
     ///
-    /// Returns [`PiControlRawError::IoError`] if there was an error reading
+    /// Returns [`PiControlError::IoError`] if there was an error reading
     /// the processimage.
-    pub unsafe fn get_dword(&self, address: u16) -> Result<u32, PiControlRawError> {
+    pub unsafe fn get_dword(&self, address: u16) -> Result<u32, PiControlError> {
         let mut bytes = [0u8; 4];
         self.0.read_exact_at(&mut bytes, address as u64)?;
         Ok(u32::from_le_bytes(bytes))
     }
 
     // unsafe due to uncertainty of address
-    unsafe fn set_value(&self, address: u16, bit: u8, value: u8) -> Result<(), PiControlRawError> {
+    unsafe fn set_value(&self, address: u16, bit: u8, value: u8) -> Result<(), PiControlError> {
         ensure!(
             (address as usize) < KB_PI_LEN,
-            PiControlRawError::InvalidArgument("address")
+            PiControlError::InvalidArgument("address")
         );
         let mut val = SPIValue {
             i16uAddress: address,
@@ -249,7 +230,7 @@ impl PiControlRaw {
     /// Writes a bit to the processimage. You have to ensure that `address` and
     /// `bit` are valid, otherwise you might write to the wrong place.
     ///
-    /// Returns [`PiControlRawError::InvalidArgument`] if `address` is larger
+    /// Returns [`PiControlError::InvalidArgument`] if `address` is larger
     /// than [`KB_PI_LEN`].
     ///
     /// # Panics
@@ -259,19 +240,19 @@ impl PiControlRaw {
         address: u16,
         bit: Bit,
         value: bool,
-    ) -> Result<(), PiControlRawError> {
+    ) -> Result<(), PiControlError> {
         self.set_value(address, bit as u8, value as u8)
     }
 
     /// Writes a byte to the processimage. You have to ensure that `address` is
     /// valid, otherwise you might write to the wrong place.
     ///
-    /// Returns [`PiControlRawError::InvalidArgument`] if `address` is larger
+    /// Returns [`PiControlError::InvalidArgument`] if `address` is larger
     /// than [`KB_PI_LEN`].
     ///
     /// # Panics
     /// Will panic if the bridge wasn't running
-    pub unsafe fn set_byte(&self, address: u16, value: u8) -> Result<(), PiControlRawError> {
+    pub unsafe fn set_byte(&self, address: u16, value: u8) -> Result<(), PiControlError> {
         self.set_value(address, 8, value)
     }
 
@@ -279,41 +260,41 @@ impl PiControlRaw {
     /// valid, otherwise you might write to the wrong place. Be aware that the value
     /// is converted to little endian before being written.
     ///
-    /// Returns [`PiControlRawError::IoError`] if there was an error reading
+    /// Returns [`PiControlError::IoError`] if there was an error reading
     /// the processimage.
-    pub unsafe fn set_word(&self, address: u16, value: u16) -> Result<(), PiControlRawError> {
+    pub unsafe fn set_word(&self, address: u16, value: u16) -> Result<(), PiControlError> {
         self.0
             .write_all_at(&value.to_le_bytes(), address as u64)
-            .map_err(PiControlRawError::from)
+            .map_err(PiControlError::from)
     }
 
     /// Writes a doubleword to the processimage. You have to ensure that `address`
     /// is valid, otherwise you might write to the wrong place. Be aware that the
     /// value is converted to little endian before being written.
     ///
-    /// Returns [`PiControlRawError::IoError`] if there was an error reading
+    /// Returns [`PiControlError::IoError`] if there was an error reading
     /// the processimage.
-    pub unsafe fn set_dword(&self, address: u16, value: u32) -> Result<(), PiControlRawError> {
+    pub unsafe fn set_dword(&self, address: u16, value: u32) -> Result<(), PiControlError> {
         self.0
             .write_all_at(&value.to_le_bytes(), address as u64)
-            .map_err(PiControlRawError::from)
+            .map_err(PiControlError::from)
     }
 
     /// Gets the offset, bitoffset and length of a variable by name.
     /// `name` must not be longer than 31 bytes, nullbyte not included.
     ///
-    /// Returns [`PiControlRawError::InvalidArgument`] if `name` is longer than
+    /// Returns [`PiControlError::InvalidArgument`] if `name` is longer than
     /// 31 bytes or if the given name was not found.\
-    /// Returns [`PiControlRawError::NoVarEntries`] if there were not variable
+    /// Returns [`PiControlError::NoVarEntries`] if there were not variable
     /// entries at all.
     ///
     /// # Panics
     /// Will panic if the bridge wasn't running
-    pub fn find_variable(&self, name: &CStr) -> Result<SPIVariable, PiControlRawError> {
+    pub fn find_variable(&self, name: &CStr) -> Result<SPIVariable, PiControlError> {
         let len = name.to_bytes_with_nul().len();
         ensure!(
             len <= 32,
-            PiControlRawError::InvalidArgument("length of name")
+            PiControlError::InvalidArgument("length of name")
         );
         let mut var = SPIVariable::default();
         var.strVarName[0..len].copy_from_slice(name.to_bytes_with_nul());
@@ -321,12 +302,12 @@ impl PiControlRaw {
             libc::EFAULT => {
                 // not specified, helpful tho, see kernel module
                 if var.i16uAddress == 0xffff && var.i8uBit == 0xff && var.i16uLength == 0xffff {
-                    PiControlRawError::InvalidArgument("name")
+                    PiControlError::InvalidArgument("name")
                 } else {
                     panic!("bridge wasn't running")
                 }
             }
-            libc::ENOENT => PiControlRawError::NoVarEntries,
+            libc::ENOENT => PiControlError::NoVarEntries,
             _ => unreachable!(),
         })?;
         Ok(var)
@@ -367,7 +348,7 @@ impl PiControlRaw {
     /// to reset are specified by a set bit in the corresponding position in
     /// `bitfield`. `bitfield` must not be `0`.
     ///
-    /// Returns [`PiControlRawError::InvalidArgument`] if `bitfield` was `0` or
+    /// Returns [`PiControlError::InvalidArgument`] if `bitfield` was `0` or
     /// if `dio_address` was not valid.
     ///
     /// # Panics
@@ -377,11 +358,11 @@ impl PiControlRaw {
         &self,
         dio_address: u8,
         bitfield: u16,
-    ) -> Result<(), PiControlRawError> {
+    ) -> Result<(), PiControlError> {
         // this is specified in the kernel module
         ensure!(
             bitfield != 0,
-            PiControlRawError::InvalidArgument("bitfield")
+            PiControlError::InvalidArgument("bitfield")
         );
         let mut ctr = SDIOResetCounter {
             i8uAddress: dio_address,
@@ -390,7 +371,7 @@ impl PiControlRaw {
         unsafe { raw::dio_reset_counter(self.0.as_raw_fd(), &mut ctr) }.map_err(|e| match e {
             libc::EFAULT => panic!("bridge wasn't running"),
             libc::EPERM => panic!("this isn't a revpi core or connect"),
-            libc::EINVAL => PiControlRawError::InvalidArgument("dio_address"),
+            libc::EINVAL => PiControlError::InvalidArgument("dio_address"),
             _ => unreachable!(),
         })?;
         Ok(())
