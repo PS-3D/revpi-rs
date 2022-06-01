@@ -15,8 +15,8 @@ struct JsonInput {
 impl Parse for JsonInput {
     fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
         Ok(JsonInput {
-            path: input.parse()?,
             name: input.parse()?,
+            path: input.parse()?,
         })
     }
 }
