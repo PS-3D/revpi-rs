@@ -53,7 +53,7 @@ fn get_fn(mod_offset: u64, item: &InOutMem) -> TokenStream2 {
 
     format!(
         "pub fn {}() -> Result<{}, revpi::picontrol::raw::PiControRawError> {{
-    self.inner.{}({})
+    unsafe {{ self.inner.{}({}) }}
 }}",
         name, ret, function, fnargs
     )
@@ -82,7 +82,7 @@ fn set_fn(mod_offset: u64, item: &InOutMem) -> TokenStream2 {
 
     format!(
         "pub fn {}({}) -> Result<(), revpi::picontrol::raw::PiControlRawError> {{
-    self.inner.{}({})
+    unsafe {{ self.inner.{}({}) }}
 }}",
         name, args, function, fnargs
     )
