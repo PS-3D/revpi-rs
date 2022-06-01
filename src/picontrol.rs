@@ -30,11 +30,6 @@ pub enum PiControlError {
     NulError(#[from] ffi::NulError),
 }
 
-#[derive(Debug)]
-pub struct PiControl {
-    inner: PiControlRaw,
-}
-
 /// Value that can be set or read from the revpi
 #[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
 pub enum Value {
@@ -83,6 +78,12 @@ impl From<u32> for Value {
     fn from(d: u32) -> Self {
         Value::DWord(d)
     }
+}
+
+
+#[derive(Debug)]
+pub struct PiControl {
+    inner: PiControlRaw,
 }
 
 impl PiControl {
