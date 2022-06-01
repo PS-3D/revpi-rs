@@ -1,7 +1,7 @@
 //! Raw bindings and struct definitions for piControl
 
 use libc;
-use std::os::unix::prelude::AsRawFd;
+use std::os::unix::prelude::RawFd;
 
 // TODO possibly do without libc?
 
@@ -149,8 +149,8 @@ enum KBRequests {
 
 pub type RawRawResult = Result<u32, i32>;
 
-unsafe fn ioctl<F: AsRawFd, T>(fd: F, request: KBRequests, argp: T) -> RawRawResult {
-    let res = libc::ioctl(fd.as_raw_fd(), request as libc::c_ulong, argp);
+unsafe fn ioctl<T>(fd: RawFd, request: KBRequests, argp: T) -> RawRawResult {
+    let res = libc::ioctl(fd, request as libc::c_ulong, argp);
     if res <= -1 {
         Err(*libc::__errno_location())
     } else {
@@ -166,7 +166,7 @@ unsafe fn ioctl<F: AsRawFd, T>(fd: F, request: KBRequests, argp: T) -> RawRawRes
 /// `Err(`[`libc::ENOTTY`]`)` is returened.
 ///
 /// For more information see `man ioctl`, `man picontrol_ioctl` or the kernel module
-pub unsafe fn reset<F: AsRawFd>(fd: F) -> RawRawResult {
+pub unsafe fn reset(fd: RawFd) -> RawRawResult {
     ioctl(fd, KBRequests::Reset, 0u64)
 }
 
@@ -182,7 +182,7 @@ pub unsafe fn reset<F: AsRawFd>(fd: F) -> RawRawResult {
 /// `Err(`[`libc::ENOTTY`]`)` is returened.
 ///
 /// For more information see `man ioctl`, `man picontrol_ioctl` or the kernel module
-pub unsafe fn get_device_info_list<F: AsRawFd>(fd: F, devs: *mut SDeviceInfo) -> RawRawResult {
+pub unsafe fn get_device_info_list(fd: RawFd, devs: *mut SDeviceInfo) -> RawRawResult {
     ioctl(fd, KBRequests::GetDeviceInfoList, devs)
 }
 
@@ -199,7 +199,7 @@ pub unsafe fn get_device_info_list<F: AsRawFd>(fd: F, devs: *mut SDeviceInfo) ->
 /// `Err(`[`libc::ENOTTY`]`)` is returened.\
 ///
 /// For more information see `man ioctl`, `man picontrol_ioctl` or the kernel module
-pub unsafe fn get_device_info<F: AsRawFd>(fd: F, dev: *mut SDeviceInfo) -> RawRawResult {
+pub unsafe fn get_device_info(fd: RawFd, dev: *mut SDeviceInfo) -> RawRawResult {
     ioctl(fd, KBRequests::GetDeviceInfo, dev)
 }
 
@@ -216,7 +216,7 @@ pub unsafe fn get_device_info<F: AsRawFd>(fd: F, dev: *mut SDeviceInfo) -> RawRa
 /// `Err(`[`libc::ENOTTY`]`)` is returened.
 ///
 /// For more information see `man ioctl`, `man picontrol_ioctl` or the kernel module
-pub unsafe fn get_value<F: AsRawFd>(fd: F, val: *mut SPIValue) -> RawRawResult {
+pub unsafe fn get_value(fd: RawFd, val: *mut SPIValue) -> RawRawResult {
     ioctl(fd, KBRequests::GetValue, val)
 }
 
@@ -232,7 +232,7 @@ pub unsafe fn get_value<F: AsRawFd>(fd: F, val: *mut SPIValue) -> RawRawResult {
 ///
 /// For more information see [`get_value`], `man ioctl`, `man picontrol_ioctl`
 /// or the kernel module
-pub unsafe fn set_value<F: AsRawFd>(fd: F, val: *mut SPIValue) -> RawRawResult {
+pub unsafe fn set_value(fd: RawFd, val: *mut SPIValue) -> RawRawResult {
     ioctl(fd, KBRequests::SetValue, val)
 }
 
@@ -249,7 +249,7 @@ pub unsafe fn set_value<F: AsRawFd>(fd: F, val: *mut SPIValue) -> RawRawResult {
 /// `Err(`[`libc::ENOTTY`]`)` is returened.
 ///
 /// For more information see `man ioctl`, `man picontrol_ioctl` or the kernel module
-pub unsafe fn find_variable<F: AsRawFd>(fd: F, var: *mut SPIVariable) -> RawRawResult {
+pub unsafe fn find_variable(fd: RawFd, var: *mut SPIVariable) -> RawRawResult {
     ioctl(fd, KBRequests::FindVariable, var)
 }
 
@@ -264,7 +264,7 @@ pub unsafe fn find_variable<F: AsRawFd>(fd: F, var: *mut SPIVariable) -> RawRawR
 /// `Err(`[`libc::ENOTTY`]`)` is returened.
 ///
 /// For more information see `man ioctl`, `man picontrol_ioctl` or the kernel module
-pub unsafe fn set_exported_outputs<F: AsRawFd>(fd: F, image: *const u8) -> RawRawResult {
+pub unsafe fn set_exported_outputs(fd: RawFd, image: *const u8) -> RawRawResult {
     ioctl(fd, KBRequests::SetExportedOutputs, image)
 }
 
@@ -281,7 +281,7 @@ pub unsafe fn set_exported_outputs<F: AsRawFd>(fd: F, image: *const u8) -> RawRa
 /// `Err(`[`libc::ENOTTY`]`)` is returened.
 ///
 /// For more information see `man ioctl`, `man picontrol_ioctl` or the kernel module
-pub unsafe fn update_device_firmware<F: AsRawFd>(fd: F, module: u32) -> RawRawResult {
+pub unsafe fn update_device_firmware(fd: RawFd, module: u32) -> RawRawResult {
     ioctl(fd, KBRequests::UpdateDeviceFirmware, module)
 }
 
@@ -301,7 +301,7 @@ pub unsafe fn update_device_firmware<F: AsRawFd>(fd: F, module: u32) -> RawRawRe
 /// `Err(`[`libc::ENOTTY`]`)` is returened.
 ///
 /// For more information see `man ioctl`, `man picontrol_ioctl` or the kernel module
-pub unsafe fn dio_reset_counter<F: AsRawFd>(fd: F, ctr: *mut SDIOResetCounter) -> RawRawResult {
+pub unsafe fn dio_reset_counter(fd: RawFd, ctr: *mut SDIOResetCounter) -> RawRawResult {
     ioctl(fd, KBRequests::DIOResetCounter, ctr)
 }
 
@@ -316,7 +316,7 @@ pub unsafe fn dio_reset_counter<F: AsRawFd>(fd: F, ctr: *mut SDIOResetCounter) -
 /// `Err(`[`libc::ENOTTY`]`)` is returened.
 ///
 /// For more information see `man ioctl`, `man picontrol_ioctl` or the kernel module
-pub unsafe fn get_last_message<F: AsRawFd>(fd: F, msg: *mut i8) -> RawRawResult {
+pub unsafe fn get_last_message(fd: RawFd, msg: *mut i8) -> RawRawResult {
     ioctl(fd, KBRequests::GetLastMessage, msg)
 }
 
@@ -331,7 +331,7 @@ pub unsafe fn get_last_message<F: AsRawFd>(fd: F, msg: *mut i8) -> RawRawResult 
 /// If fd is not a character special device or doesn't refer to "/dev/piControl0",
 /// `Err(`[`libc::ENOTTY`]`)` is returened.
 /// For more information see `man ioctl`, `man picontrol_ioctl` or the kernel module
-pub unsafe fn stop_io<F: AsRawFd>(fd: F, stop: *mut i32) -> RawRawResult {
+pub unsafe fn stop_io(fd: RawFd, stop: *mut i32) -> RawRawResult {
     ioctl(fd, KBRequests::StopIO, stop)
 }
 
@@ -345,7 +345,7 @@ pub unsafe fn stop_io<F: AsRawFd>(fd: F, stop: *mut i32) -> RawRawResult {
 /// `Err(`[`libc::ENOTTY`]`)` is returened.
 ///
 /// For more information see `man ioctl`, `man picontrol_ioctl` or the kernel module
-pub unsafe fn set_output_watchdog<F: AsRawFd>(fd: F, millis: *mut u32) -> RawRawResult {
+pub unsafe fn set_output_watchdog(fd: RawFd, millis: *mut u32) -> RawRawResult {
     ioctl(fd, KBRequests::SetOutputWatchdog, millis)
 }
 
@@ -361,6 +361,6 @@ pub unsafe fn set_output_watchdog<F: AsRawFd>(fd: F, millis: *mut u32) -> RawRaw
 /// `Err(`[`libc::ENOTTY`]`)` is returened.
 ///
 /// For more information see `man ioctl`, `man picontrol_ioctl` or the kernel module
-pub unsafe fn wait_for_event<F: AsRawFd>(fd: F, event: *mut i32) -> RawRawResult {
+pub unsafe fn wait_for_event(fd: RawFd, event: *mut i32) -> RawRawResult {
     ioctl(fd, KBRequests::WaitForEvent, event)
 }
