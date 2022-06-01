@@ -1,3 +1,26 @@
+//! Provides IO functionality for the RevPi
+//!
+//! Basic, safe IO is provided by [`PiControl`]:
+//! ```no_run
+//! # use revpi::picontrol::{PiControl, Value};
+//! let pi = PiControl::new().unwrap();
+//! pi.set_value("RevPiLED", Value::Byte(42)).unwrap();
+//! ```
+//!
+//! If you want to do more advanced also unsafe stuff like replaceing the whole
+//! processimage or updating the whole firmware, you might be better off with
+//! the [`raw`] module, which, contrary to [`PiControl`], provides access to *all*
+//! RevPi functions:
+//! ```no_run
+//! # use revpi::picontrol::raw::{PiControlRaw};
+//! let raw = PiControlRaw::new().unwrap();
+//! unsafe { raw.update_device_firmware(31) };
+//! ```
+//! Usually, PiControl is enough though.
+//!
+//! Lastly, [`raw::raw`] provides the raw ioctl bindings needed for IO with the
+//! RevPi.
+
 pub mod raw;
 
 use self::raw::{raw::SPIVariable, Bit, PiControlRaw};
@@ -80,7 +103,7 @@ impl From<u32> for Value {
     }
 }
 
-
+/// Provides safe RevPi IO
 #[derive(Debug)]
 pub struct PiControl {
     inner: PiControlRaw,
