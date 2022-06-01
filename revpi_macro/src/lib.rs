@@ -8,8 +8,8 @@ use serde_json;
 use syn::{parse::Parse, parse_macro_input, Ident, LitStr};
 
 struct JsonInput {
-    path: LitStr,
     name: Ident,
+    path: LitStr,
 }
 
 impl Parse for JsonInput {
