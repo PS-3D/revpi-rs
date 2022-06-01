@@ -35,7 +35,8 @@ pub struct PiControl {
     inner: PiControlRaw,
 }
 
-#[derive(Debug, PartialEq, Hash, Clone, Copy)]
+/// Value that can be set or read from the revpi
+#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
 pub enum Value {
     Bit(bool),
     Byte(u8),
@@ -44,6 +45,7 @@ pub enum Value {
 }
 
 impl Value {
+    /// Returns the number of bits this value occupies in the processimage
     pub fn bitcnt(&self) -> usize {
         use Value::*;
         match self {
@@ -56,30 +58,44 @@ impl Value {
 }
 
 impl From<bool> for Value {
+    /// Returns a [`Value::Bit`] encapsulating the given bool
     fn from(b: bool) -> Self {
         Value::Bit(b)
     }
 }
 
 impl From<u8> for Value {
+    /// Returns a [`Value::Byte`] encapsulating the given u8
     fn from(b: u8) -> Self {
         Value::Byte(b)
     }
 }
 
 impl From<u16> for Value {
+    /// Returns a [`Value::Word`] encapsulating the given u16
     fn from(w: u16) -> Self {
         Value::Word(w)
     }
 }
 
 impl From<u32> for Value {
+    /// Returns a [`Value::DWord`] encapsulating the given u32
     fn from(d: u32) -> Self {
         Value::DWord(d)
     }
 }
 
 impl PiControl {
+    /// Creates a new PiControl object
+    ///
+    /// Will return a [`PiControlError::IoError`] if the processimage can't be
+    /// opened
+    ///
+    /// # Example
+    /// ```no_run
+    /// # use revpi::picontrol::PiControl;
+    /// let pi = PiControl::new().unwrap();
+    /// ```
     pub fn new() -> Result<Self, PiControlError> {
         Ok(Self {
             inner: PiControlRaw::new()?,
@@ -91,6 +107,19 @@ impl PiControl {
             .find_variable(&CString::new(name).map_err(PiControlError::from)?)
     }
 
+    /// Sets the given value in the processimage. `name` is the name given to the
+    /// field that should be written to in PiCtory.
+    ///
+    /// If the length found in the name lookup and the length of `value` don't
+    /// match, a [`PiControlError::InvalidArgument`] is returned. Same thing if
+    /// the name can't be found
+    ///
+    /// # Example
+    /// ```no_run
+    /// # use revpi::picontrol::{PiControl, Value};
+    /// let pi = PiControl::new().unwrap();
+    /// pi.set_value("RevPiLED", Value::Byte(42)).unwrap();
+    /// ```
     pub fn set_value(&self, name: &str, value: Value) -> Result<(), PiControlError> {
         let name = self.find_variable(name)?;
         ensure!(
@@ -108,6 +137,21 @@ impl PiControl {
         }
     }
 
+    /// Gets the given value from the processimage. `name` is the name given to the
+    /// field that should be written to in PiCtory.
+    ///
+    /// The variant of the returned [`Value`] depends on the length of the field
+    /// that is read.
+    /// If the name can't be found, a [`PiControlError::InvalidArgument`] is
+    /// returned.
+    ///
+    /// # Example
+    /// ```no_run
+    /// # use revpi::picontrol::{PiControl, Value};
+    /// let pi = PiControl::new().unwrap();
+    /// let val = pi.get_value("Core_Temperature").unwrap();
+    /// assert_eq!(val, Value::Byte(42)); // just an example value
+    /// ```
     pub fn get_value(&self, name: &str) -> Result<Value, PiControlError> {
         let name = self.find_variable(name)?;
         match name.i16uLength {
