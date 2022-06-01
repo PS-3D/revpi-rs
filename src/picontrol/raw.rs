@@ -60,6 +60,27 @@ pub enum Bit {
     Seven,
 }
 
+impl From<u8> for Bit {
+    /// Converts u8 to Bit
+    ///
+    /// # Panics
+    /// Will panic if `v > 7`
+    fn from(v: u8) -> Self {
+        use Bit::*;
+        match v {
+            0 => Zero,
+            1 => One,
+            2 => Two,
+            3 => Three,
+            4 => Four,
+            5 => Five,
+            6 => Six,
+            7 => Seven,
+            _ => panic!("integer out of range of enum"),
+        }
+    }
+}
+
 /// Provides semi-raw access to the RevPi
 ///
 /// The focus lies on providing error-checking where possible but not at the
