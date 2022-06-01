@@ -12,6 +12,10 @@ pub const REV_PI_DEV_CNT_MAX: usize = 64;
 pub const REV_PI_ERROR_MSG_LEN: usize = 256;
 /// Length of the processimage
 pub const KB_PI_LEN: usize = 4096;
+/// Location of the running config
+pub const PICONFIG_FILE: &str = "/etc/revpi/config.rsc";
+/// Location of the running config on wheezy
+pub const PICONFIG_FILE_WHEEZY: &str = "/opt/KUNBUS/config.rsc";
 
 /// Rust binding for the `SDeviceInfo` struct defined in [`piControl.h`](https://github.com/RevolutionPi/piControl/blob/master/piControl.h#L124)
 #[allow(non_snake_case)]
