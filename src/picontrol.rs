@@ -55,6 +55,30 @@ impl Value {
     }
 }
 
+impl From<bool> for Value {
+    fn from(b: bool) -> Self {
+        Value::Bit(b)
+    }
+}
+
+impl From<u8> for Value {
+    fn from(b: u8) -> Self {
+        Value::Byte(b)
+    }
+}
+
+impl From<u16> for Value {
+    fn from(w: u16) -> Self {
+        Value::Word(w)
+    }
+}
+
+impl From<u32> for Value {
+    fn from(d: u32) -> Self {
+        Value::DWord(d)
+    }
+}
+
 impl PiControl {
     pub fn new() -> Result<Self, PiControlError> {
         Ok(Self {
@@ -86,15 +110,13 @@ impl PiControl {
 
     pub fn get_value(&self, name: &str) -> Result<Value, PiControlError> {
         let name = self.find_variable(name)?;
-        let res = match name.i16uLength {
-            1 => {
-                Value::Bit(unsafe { self.inner.get_bit(name.i16uAddress, Bit::from(name.i8uBit)) }?)
-            }
-            8 => Value::Byte(unsafe { self.inner.get_byte(name.i16uAddress) }?),
-            16 => Value::Word(unsafe { self.inner.get_word(name.i16uAddress) }?),
-            32 => Value::DWord(unsafe { self.inner.get_dword(name.i16uAddress) }?),
+        match name.i16uLength {
+            1 => unsafe { self.inner.get_bit(name.i16uAddress, Bit::from(name.i8uBit)) }
+                .map(Value::from),
+            8 => unsafe { self.inner.get_byte(name.i16uAddress) }.map(Value::from),
+            16 => unsafe { self.inner.get_word(name.i16uAddress) }.map(Value::from),
+            32 => unsafe { self.inner.get_dword(name.i16uAddress) }.map(Value::from),
             _ => panic!("invalid bitlength from piControl"),
-        };
-        Ok(res)
+        }
     }
 }
