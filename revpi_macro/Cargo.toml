@@ -13,4 +13,4 @@ syn = { version = "1.0.95", features = ["parsing"]}
 proc-macro2 = "1.0.39"
 quote = "1.0.18"
 serde_json = "1.0.81"
-revpi_rsc = {path = "../revpi_rsc"}
+revpi_rsc = {version = "0.1.0", path = "../revpi_rsc"}

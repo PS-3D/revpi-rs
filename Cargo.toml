@@ -8,6 +8,13 @@ edition = "2021"
 [dependencies]
 libc = "0.2.126"
 thiserror = "1.0.31"
+revpi_rsc = {version = "0.1.0", path = "revpi_rsc", optional = true}
+revpi_macro = {version = "0.1.0", path = "revpi_macro", optional = true}
+
+[features]
+default = ["rsc"]
+rsc = ["dep:revpi_rsc"]
+macro = ["rsc", "dep:revpi_macro"]
 
 [workspace]
 members = ["revpi_macro", "revpi_rsc"]
