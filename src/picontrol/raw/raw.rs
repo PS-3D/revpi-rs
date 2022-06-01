@@ -147,9 +147,7 @@ enum KBRequests {
     WaitForEvent = 0x4b32,
 }
 
-pub type RawRawResult = Result<u32, i32>;
-
-unsafe fn ioctl<T>(fd: RawFd, request: KBRequests, argp: T) -> RawRawResult {
+unsafe fn ioctl<T>(fd: RawFd, request: KBRequests, argp: T) -> Result<u32, i32> {
     let res = libc::ioctl(fd, request as libc::c_ulong, argp);
     if res <= -1 {
         Err(*libc::__errno_location())
@@ -166,7 +164,7 @@ unsafe fn ioctl<T>(fd: RawFd, request: KBRequests, argp: T) -> RawRawResult {
 /// `Err(`[`libc::ENOTTY`]`)` is returened.
 ///
 /// For more information see `man ioctl`, `man picontrol_ioctl` or the kernel module
-pub unsafe fn reset(fd: RawFd) -> RawRawResult {
+pub unsafe fn reset(fd: RawFd) -> Result<u32, i32> {
     ioctl(fd, KBRequests::Reset, 0u64)
 }
 
@@ -182,7 +180,7 @@ pub unsafe fn reset(fd: RawFd) -> RawRawResult {
 /// `Err(`[`libc::ENOTTY`]`)` is returened.
 ///
 /// For more information see `man ioctl`, `man picontrol_ioctl` or the kernel module
-pub unsafe fn get_device_info_list(fd: RawFd, devs: *mut SDeviceInfo) -> RawRawResult {
+pub unsafe fn get_device_info_list(fd: RawFd, devs: *mut SDeviceInfo) -> Result<u32, i32> {
     ioctl(fd, KBRequests::GetDeviceInfoList, devs)
 }
 
@@ -199,7 +197,7 @@ pub unsafe fn get_device_info_list(fd: RawFd, devs: *mut SDeviceInfo) -> RawRawR
 /// `Err(`[`libc::ENOTTY`]`)` is returened.\
 ///
 /// For more information see `man ioctl`, `man picontrol_ioctl` or the kernel module
-pub unsafe fn get_device_info(fd: RawFd, dev: *mut SDeviceInfo) -> RawRawResult {
+pub unsafe fn get_device_info(fd: RawFd, dev: *mut SDeviceInfo) -> Result<u32, i32> {
     ioctl(fd, KBRequests::GetDeviceInfo, dev)
 }
 
@@ -216,7 +214,7 @@ pub unsafe fn get_device_info(fd: RawFd, dev: *mut SDeviceInfo) -> RawRawResult 
 /// `Err(`[`libc::ENOTTY`]`)` is returened.
 ///
 /// For more information see `man ioctl`, `man picontrol_ioctl` or the kernel module
-pub unsafe fn get_value(fd: RawFd, val: *mut SPIValue) -> RawRawResult {
+pub unsafe fn get_value(fd: RawFd, val: *mut SPIValue) -> Result<u32, i32> {
     ioctl(fd, KBRequests::GetValue, val)
 }
 
@@ -232,7 +230,7 @@ pub unsafe fn get_value(fd: RawFd, val: *mut SPIValue) -> RawRawResult {
 ///
 /// For more information see [`get_value`], `man ioctl`, `man picontrol_ioctl`
 /// or the kernel module
-pub unsafe fn set_value(fd: RawFd, val: *mut SPIValue) -> RawRawResult {
+pub unsafe fn set_value(fd: RawFd, val: *mut SPIValue) -> Result<u32, i32> {
     ioctl(fd, KBRequests::SetValue, val)
 }
 
@@ -249,7 +247,7 @@ pub unsafe fn set_value(fd: RawFd, val: *mut SPIValue) -> RawRawResult {
 /// `Err(`[`libc::ENOTTY`]`)` is returened.
 ///
 /// For more information see `man ioctl`, `man picontrol_ioctl` or the kernel module
-pub unsafe fn find_variable(fd: RawFd, var: *mut SPIVariable) -> RawRawResult {
+pub unsafe fn find_variable(fd: RawFd, var: *mut SPIVariable) -> Result<u32, i32> {
     ioctl(fd, KBRequests::FindVariable, var)
 }
 
@@ -264,7 +262,7 @@ pub unsafe fn find_variable(fd: RawFd, var: *mut SPIVariable) -> RawRawResult {
 /// `Err(`[`libc::ENOTTY`]`)` is returened.
 ///
 /// For more information see `man ioctl`, `man picontrol_ioctl` or the kernel module
-pub unsafe fn set_exported_outputs(fd: RawFd, image: *const u8) -> RawRawResult {
+pub unsafe fn set_exported_outputs(fd: RawFd, image: *const u8) -> Result<u32, i32> {
     ioctl(fd, KBRequests::SetExportedOutputs, image)
 }
 
@@ -281,7 +279,7 @@ pub unsafe fn set_exported_outputs(fd: RawFd, image: *const u8) -> RawRawResult 
 /// `Err(`[`libc::ENOTTY`]`)` is returened.
 ///
 /// For more information see `man ioctl`, `man picontrol_ioctl` or the kernel module
-pub unsafe fn update_device_firmware(fd: RawFd, module: u32) -> RawRawResult {
+pub unsafe fn update_device_firmware(fd: RawFd, module: u32) -> Result<u32, i32> {
     ioctl(fd, KBRequests::UpdateDeviceFirmware, module)
 }
 
@@ -301,7 +299,7 @@ pub unsafe fn update_device_firmware(fd: RawFd, module: u32) -> RawRawResult {
 /// `Err(`[`libc::ENOTTY`]`)` is returened.
 ///
 /// For more information see `man ioctl`, `man picontrol_ioctl` or the kernel module
-pub unsafe fn dio_reset_counter(fd: RawFd, ctr: *mut SDIOResetCounter) -> RawRawResult {
+pub unsafe fn dio_reset_counter(fd: RawFd, ctr: *mut SDIOResetCounter) -> Result<u32, i32> {
     ioctl(fd, KBRequests::DIOResetCounter, ctr)
 }
 
@@ -316,7 +314,7 @@ pub unsafe fn dio_reset_counter(fd: RawFd, ctr: *mut SDIOResetCounter) -> RawRaw
 /// `Err(`[`libc::ENOTTY`]`)` is returened.
 ///
 /// For more information see `man ioctl`, `man picontrol_ioctl` or the kernel module
-pub unsafe fn get_last_message(fd: RawFd, msg: *mut i8) -> RawRawResult {
+pub unsafe fn get_last_message(fd: RawFd, msg: *mut i8) -> Result<u32, i32> {
     ioctl(fd, KBRequests::GetLastMessage, msg)
 }
 
@@ -331,7 +329,7 @@ pub unsafe fn get_last_message(fd: RawFd, msg: *mut i8) -> RawRawResult {
 /// If fd is not a character special device or doesn't refer to "/dev/piControl0",
 /// `Err(`[`libc::ENOTTY`]`)` is returened.
 /// For more information see `man ioctl`, `man picontrol_ioctl` or the kernel module
-pub unsafe fn stop_io(fd: RawFd, stop: *mut i32) -> RawRawResult {
+pub unsafe fn stop_io(fd: RawFd, stop: *mut i32) -> Result<u32, i32> {
     ioctl(fd, KBRequests::StopIO, stop)
 }
 
@@ -345,7 +343,7 @@ pub unsafe fn stop_io(fd: RawFd, stop: *mut i32) -> RawRawResult {
 /// `Err(`[`libc::ENOTTY`]`)` is returened.
 ///
 /// For more information see `man ioctl`, `man picontrol_ioctl` or the kernel module
-pub unsafe fn set_output_watchdog(fd: RawFd, millis: *mut u32) -> RawRawResult {
+pub unsafe fn set_output_watchdog(fd: RawFd, millis: *mut u32) -> Result<u32, i32> {
     ioctl(fd, KBRequests::SetOutputWatchdog, millis)
 }
 
@@ -361,6 +359,6 @@ pub unsafe fn set_output_watchdog(fd: RawFd, millis: *mut u32) -> RawRawResult {
 /// `Err(`[`libc::ENOTTY`]`)` is returened.
 ///
 /// For more information see `man ioctl`, `man picontrol_ioctl` or the kernel module
-pub unsafe fn wait_for_event(fd: RawFd, event: *mut i32) -> RawRawResult {
+pub unsafe fn wait_for_event(fd: RawFd, event: *mut i32) -> Result<u32, i32> {
     ioctl(fd, KBRequests::WaitForEvent, event)
 }
