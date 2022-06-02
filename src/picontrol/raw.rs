@@ -67,7 +67,14 @@ pub struct PiControlRaw(File);
 impl PiControlRaw {
     /// Constructs a new PiControlRaw object.
     ///
-    /// Returns a [`PiControlError::IoError`] if opening "/dev/piControl0" fails.
+    /// # Errors
+    /// Returns a [`PiControlError::IoError`] if opening `"/dev/piControl0"` fails.
+    ///
+    /// # Examples
+    /// ```no_run
+    /// # use revpi::picontrol::raw::PiControlRaw;
+    /// let raw = PiControlRaw::new().unwrap();
+    /// ```
     pub fn new() -> Result<Self, PiControlError> {
         Ok(PiControlRaw(File::open("/dev/piControl0")?))
     }
@@ -75,11 +82,22 @@ impl PiControlRaw {
     // every error could also be EINVAL if argp or request in ioctl is invalid, but that shouldn't be possible
     // could also be EFAULT if argp is inaccessible or fd is invalid, also left out where not possible
 
-    /// Resets the piControl driver. You have to ensure that either the
-    /// configuration won't change or that the changes are taken into account.
+    /// Resets the piControl driver.
+    ///
+    /// # Safety
+    /// Since the config could have change since the last reload, you have to
+    /// ensure that either that isn't the case or that the changes are taken
+    /// into account.
     ///
     /// # Panics
     /// Will panic if the bridge restart timed out.
+    ///
+    /// # Examples
+    /// ```no_run
+    /// # use revpi::picontrol::raw::PiControlRaw;
+    /// let raw = PiControlRaw::new().unwrap();
+    /// unsafe { raw.reset() };
+    /// ```
     pub unsafe fn reset(&self) {
         raw::reset(self.0.as_raw_fd())
             .map_err(|e| match e {
@@ -95,6 +113,14 @@ impl PiControlRaw {
     ///
     /// # Panics
     /// Will panic if the kernel module ran out of memory.
+    ///
+    /// # Examples
+    /// ```no_run
+    /// # use revpi::picontrol::raw::PiControlRaw;
+    /// let raw = PiControlRaw::new().unwrap();
+    /// let devs = raw.get_device_info_list();
+    /// println!("{:?}", devs);
+    /// ```
     pub fn get_device_info_list(&self) -> Vec<SDeviceInfo> {
         let mut devs = Vec::with_capacity(REV_PI_DEV_CNT_MAX);
         let cnt = unsafe { raw::get_device_info_list(self.0.as_raw_fd(), devs.as_mut_ptr()) }
@@ -116,8 +142,17 @@ impl PiControlRaw {
 
     /// Returns the information of the requested device.
     ///
+    /// # Errors
     /// If no device with the given address is found, [`PiControlError::DeviceNotFound`]
     /// is returned.
+    ///
+    /// # Examples
+    /// ```no_run
+    /// # use revpi::picontrol::raw::PiControlRaw;
+    /// let raw = PiControlRaw::new().unwrap();
+    /// let dev = raw.get_device_info(31).unwrap();
+    /// println!("{:?}", dev);
+    /// ```
     pub fn get_device_info(&self, address: u8) -> Result<SDeviceInfo, PiControlError> {
         let mut dev = SDeviceInfo::default();
         dev.i8uAddress = address;
@@ -148,48 +183,94 @@ impl PiControlRaw {
         Ok(val.i8uValue)
     }
 
-    /// Gets a bit from the processimage. You have to ensure that `address` and
-    /// `bit` are valid, otherwise you might get a wrong value.
+    /// Gets a bit from the processimage.
     ///
+    /// # Errors
     /// Returns [`PiControlError::InvalidArgument`] if `address` is larger
     /// than [`KB_PI_LEN`].
     ///
+    /// # Safety
+    /// You have to ensure that `address` and `bit` are valid and point to the
+    /// right value, otherwise you might get something unexpected.
+    ///
     /// # Panics
     /// Will panic if the bridge wasn't running
+    ///
+    /// # Examples
+    /// ```no_run
+    /// # use revpi::picontrol::raw::{PiControlRaw, Bit};
+    /// let raw = PiControlRaw::new().unwrap();
+    /// let bit = unsafe { raw.get_bit(1337, Bit::Zero) }.unwrap();
+    /// println!("{}", bit);
+    /// ```
     pub unsafe fn get_bit(&self, address: u16, bit: Bit) -> Result<bool, PiControlError> {
         self.get_value(address, bit as u8).map(|r| r >= 1)
     }
 
-    /// Gets a byte from the processimage. You have to ensure that `address` is
-    /// valid, otherwise you might get a wrong value.
+    /// Gets a byte from the processimage.
     ///
+    /// # Errors
     /// Returns [`PiControlError::InvalidArgument`] if `address` is larger
     /// than [`KB_PI_LEN`].
     ///
+    /// # Safety
+    /// You have to ensure that `address` is valid and points to the right value,
+    /// otherwise you might get something unexpected.
+    ///
     /// # Panics
     /// Will panic if the bridge wasn't running
+    ///
+    /// # Examples
+    /// ```no_run
+    /// # use revpi::picontrol::raw::PiControlRaw;
+    /// let raw = PiControlRaw::new().unwrap();
+    /// let byte = unsafe { raw.get_byte(1337) }.unwrap();
+    /// println!("{}", byte);
+    /// ```
     pub unsafe fn get_byte(&self, address: u16) -> Result<u8, PiControlError> {
         self.get_value(address, 8)
     }
 
-    /// Gets a word from the processimage. You have to ensure that `address` is
-    /// valid, otherwise you might get a wrong value. Be aware that the value
-    /// is returned in the system byteorder, while it is stored as little endian.
+    /// Gets a word from the processimage.
     ///
+    /// # Errors
     /// Returns [`PiControlError::IoError`] if there was an error reading
     /// the processimage.
+    ///
+    /// # Safety
+    /// You have to ensure that `address` is valid and points to the right value,
+    /// otherwise you might get something unexpected.
+    ///
+    /// # Examples
+    /// ```no_run
+    /// # use revpi::picontrol::raw::PiControlRaw;
+    /// let raw = PiControlRaw::new().unwrap();
+    /// let word = unsafe { raw.get_word(1337) }.unwrap();
+    /// println!("{}", word);
+    /// ```
     pub unsafe fn get_word(&self, address: u16) -> Result<u16, PiControlError> {
         let mut bytes = [0u8; 2];
         self.0.read_exact_at(&mut bytes, address as u64)?;
         Ok(u16::from_le_bytes(bytes))
     }
 
-    /// Gets a doubleword from the processimage. You have to ensure that `address`
-    /// is valid, otherwise you might get a wrong value. Be aware that the value
-    /// is returned in the system byteorder, while it is stored as little endian.
+    /// Gets a doubleword from the processimage.
     ///
+    /// # Errors
     /// Returns [`PiControlError::IoError`] if there was an error reading
     /// the processimage.
+    ///
+    /// # Safety
+    /// You have to ensure that `address` is valid and points to the right value,
+    /// otherwise you might get something unexpected.
+    ///
+    /// # Examples
+    /// ```no_run
+    /// # use revpi::picontrol::raw::PiControlRaw;
+    /// let raw = PiControlRaw::new().unwrap();
+    /// let dword = unsafe { raw.get_dword(1337) }.unwrap();
+    /// println!("{}", dword);
+    /// ```
     pub unsafe fn get_dword(&self, address: u16) -> Result<u32, PiControlError> {
         let mut bytes = [0u8; 4];
         self.0.read_exact_at(&mut bytes, address as u64)?;
@@ -216,14 +297,25 @@ impl PiControlRaw {
         Ok(())
     }
 
-    /// Writes a bit to the processimage. You have to ensure that `address` and
-    /// `bit` are valid, otherwise you might write to the wrong place.
+    /// Writes a bit to the processimage.
     ///
+    /// # Errors
     /// Returns [`PiControlError::InvalidArgument`] if `address` is larger
     /// than [`KB_PI_LEN`].
     ///
+    /// # Safety
+    /// You have to ensure that `address` and `bit` are valid and point to the
+    /// right value, otherwise you might write in the wrong place.
+    ///
     /// # Panics
     /// Will panic if the bridge wasn't running
+    ///
+    /// # Examples
+    /// ```no_run
+    /// # use revpi::picontrol::raw::{PiControlRaw, Bit};
+    /// let raw = PiControlRaw::new().unwrap();
+    /// unsafe { raw.set_bit(1337, Bit::Zero, true) }.unwrap();
+    /// ```
     pub unsafe fn set_bit(
         &self,
         address: u16,
@@ -233,36 +325,67 @@ impl PiControlRaw {
         self.set_value(address, bit as u8, value as u8)
     }
 
-    /// Writes a byte to the processimage. You have to ensure that `address` is
-    /// valid, otherwise you might write to the wrong place.
+    /// Writes a byte to the processimage.
     ///
+    /// # Errors
     /// Returns [`PiControlError::InvalidArgument`] if `address` is larger
     /// than [`KB_PI_LEN`].
     ///
+    /// # Safety
+    /// You have to ensure that `address` is valid and points to the right value,
+    /// otherwise you might write in the wrong place.
+    ///
     /// # Panics
     /// Will panic if the bridge wasn't running
+    ///
+    /// # Examples
+    /// ```no_run
+    /// # use revpi::picontrol::raw::PiControlRaw;
+    /// let raw = PiControlRaw::new().unwrap();
+    /// unsafe { raw.set_byte(1337, 42) }.unwrap();
+    /// ```
     pub unsafe fn set_byte(&self, address: u16, value: u8) -> Result<(), PiControlError> {
         self.set_value(address, 8, value)
     }
 
-    /// Writes a word to the processimage. You have to ensure that `address` is
-    /// valid, otherwise you might write to the wrong place. Be aware that the value
-    /// is converted to little endian before being written.
+    /// Writes a word to the processimage.
     ///
+    /// # Errors
     /// Returns [`PiControlError::IoError`] if there was an error reading
     /// the processimage.
+    ///
+    /// # Safety
+    /// You have to ensure that `address` is valid and points to the right value,
+    /// otherwise you might write in the wrong place.
+    ///
+    /// # Examples
+    /// ```no_run
+    /// # use revpi::picontrol::raw::PiControlRaw;
+    /// let raw = PiControlRaw::new().unwrap();
+    /// unsafe { raw.set_word(1337, 42) }.unwrap();
+    /// ```
     pub unsafe fn set_word(&self, address: u16, value: u16) -> Result<(), PiControlError> {
         self.0
             .write_all_at(&value.to_le_bytes(), address as u64)
             .map_err(PiControlError::from)
     }
 
-    /// Writes a doubleword to the processimage. You have to ensure that `address`
-    /// is valid, otherwise you might write to the wrong place. Be aware that the
-    /// value is converted to little endian before being written.
+    /// Writes a doubleword to the processimage.
     ///
+    /// # Errors
     /// Returns [`PiControlError::IoError`] if there was an error reading
     /// the processimage.
+    ///
+    /// # Safety
+    /// You have to ensure that `address` is valid and points to the right value,
+    /// otherwise you might write in the wrong place.
+    ///
+    /// # Examples
+    /// ```no_run
+    /// # use revpi::picontrol::raw::PiControlRaw;
+    /// let raw = PiControlRaw::new().unwrap();
+    /// unsafe { raw.set_word(1337, 42) }.unwrap();
+    /// ```
     pub unsafe fn set_dword(&self, address: u16, value: u32) -> Result<(), PiControlError> {
         self.0
             .write_all_at(&value.to_le_bytes(), address as u64)
@@ -272,6 +395,7 @@ impl PiControlRaw {
     /// Gets the offset, bitoffset and length of a variable by name.
     /// `name` must not be longer than 31 bytes, nullbyte not included.
     ///
+    /// # Errors
     /// Returns [`PiControlError::InvalidArgument`] if `name` is longer than
     /// 31 bytes or if the given name was not found.\
     /// Returns [`PiControlError::NoVarEntries`] if there were not variable
@@ -279,6 +403,15 @@ impl PiControlRaw {
     ///
     /// # Panics
     /// Will panic if the bridge wasn't running
+    ///
+    /// # Examples
+    /// ```no_run
+    /// # use revpi::picontrol::raw::PiControlRaw;
+    /// use std::ffi::CString;
+    /// let raw = PiControlRaw::new().unwrap();
+    /// let var = raw.find_variable(&CString::new("test").unwrap()).unwrap();
+    /// println!("{:?}", var)
+    /// ```
     pub fn find_variable(&self, name: &CStr) -> Result<SPIVariable, PiControlError> {
         let len = name.to_bytes_with_nul().len();
         ensure!(len <= 32, PiControlError::InvalidArgument("length of name"));
@@ -300,24 +433,45 @@ impl PiControlRaw {
     }
 
     // unsafe because only one process should call this
-    /// Replaces the whole processimage with the given image. You have to ensure
-    /// that there are no other processes that have an open file descriptor on
-    /// "/dev/piControl0".
+    /// Replaces the whole processimage with the given image.
+    ///
+    /// # Safety
+    /// You have to ensure that there are no other processes that have an open
+    /// file descriptor on "/dev/piControl0".
+    ///
+    /// # Examples
+    /// ```no_run
+    /// # use revpi::picontrol::raw::PiControlRaw;
+    /// use revpi::picontrol::raw::raw::KB_PI_LEN;
+    /// let raw = PiControlRaw::new().unwrap();
+    /// let image = [0; KB_PI_LEN]; // this would ofc be a bad idea
+    /// unsafe { raw.set_exported_outputs(&image) };
+    /// ```
     pub unsafe fn set_exported_outputs(&self, image: &[u8; KB_PI_LEN]) {
         raw::set_exported_outputs(self.0.as_raw_fd(), image.as_ptr()).unwrap();
     }
 
     // unsafe because device might get bricked
-    /// Updates the firmware of a connected device. You have to ensure that there
-    /// is exactly one device connected at the time of the update. Also, though
-    /// it is not specified, your device might get bricked if you lose power
-    /// during the update. `module` is the address of the module that should be
-    /// updated. If `module` is `0`, the first device that's found will be updated.
+    /// Updates the firmware of a connected device. `module` is the address of
+    /// the module that should be updated. If `module` is `0`, the first device
+    /// that's found will be updated.
+    ///
+    /// # Safety
+    /// You have to ensure that there is exactly one device connected at the
+    /// time of the update. Also, though it is not specified, your device might
+    /// get bricked if you lose power during the update.
     ///
     /// # Panics
     /// Will panic if the RevPi is not a RevPi Core or RevPi Connect.
     /// Will also panic if the bridge wasn't running or if too many or too little
     /// modules were connected.
+    ///
+    /// # Examples
+    /// ```no_run
+    /// # use revpi::picontrol::raw::PiControlRaw;
+    /// let raw = PiControlRaw::new().unwrap();
+    /// unsafe { raw.update_device_firmware(31) };
+    /// ```
     pub unsafe fn update_device_firmware(&self, module: u32) {
         raw::update_device_firmware(self.0.as_raw_fd(), module)
             .map_err(|e| match e {
@@ -334,12 +488,20 @@ impl PiControlRaw {
     /// to reset are specified by a set bit in the corresponding position in
     /// `bitfield`. `bitfield` must not be `0`.
     ///
+    /// # Errors
     /// Returns [`PiControlError::InvalidArgument`] if `bitfield` was `0` or
     /// if `dio_address` was not valid.
     ///
     /// # Panics
     /// Will panic if the RevPi is not a RevPi Core or RevPi Connect, or if the
     /// bridge wasn't running.
+    ///
+    /// # Examples
+    /// ```no_run
+    /// # use revpi::picontrol::raw::PiControlRaw;
+    /// let raw = PiControlRaw::new().unwrap();
+    /// raw.dio_reset_counter(31, 0b10011001_01100110).unwrap();
+    /// ```
     pub fn dio_reset_counter(&self, dio_address: u8, bitfield: u16) -> Result<(), PiControlError> {
         // this is specified in the kernel module
         ensure!(bitfield != 0, PiControlError::InvalidArgument("bitfield"));
@@ -357,6 +519,14 @@ impl PiControlRaw {
     }
 
     /// Returns the last error message of the RevPi
+    ///
+    /// # Examples
+    /// ```no_run
+    /// # use revpi::picontrol::raw::PiControlRaw;
+    /// let raw = PiControlRaw::new().unwrap();
+    /// let msg = raw.get_last_message();
+    /// println!("{}", msg.into_string().unwrap());
+    /// ```
     pub fn get_last_message(&self) -> CString {
         let mut msg = Vec::with_capacity(REV_PI_ERROR_MSG_LEN);
         unsafe {
@@ -380,16 +550,37 @@ impl PiControlRaw {
 
     /// Stops all I/O communication. piControl will write `0` to all outputs and
     /// inputs won't be updated.
+    ///
+    /// # Examples
+    /// ```no_run
+    /// # use revpi::picontrol::raw::PiControlRaw;
+    /// let raw = PiControlRaw::new().unwrap();
+    /// raw.stop_io();
+    /// ```
     pub fn stop_io(&self) {
         self.inner_stop_io(1);
     }
 
     /// Stops I/O communication
+    ///
+    /// # Examples
+    /// ```no_run
+    /// # use revpi::picontrol::raw::PiControlRaw;
+    /// let raw = PiControlRaw::new().unwrap();
+    /// raw.start_io();
+    /// ```
     pub fn start_io(&self) {
         self.inner_stop_io(0);
     }
 
     /// Toggles I/O communication
+    ///
+    /// # Examples
+    /// ```no_run
+    /// # use revpi::picontrol::raw::PiControlRaw;
+    /// let raw = PiControlRaw::new().unwrap();
+    /// raw.toggle_io();
+    /// ```
     pub fn toggle_io(&self) {
         self.inner_stop_io(2);
     }
@@ -398,6 +589,13 @@ impl PiControlRaw {
     /// To stop the watchdog, set `millis` to zero or drop this object.
     ///
     /// For more information see `man picontrol_ioctl`
+    ///
+    /// # Examples
+    /// ```no_run
+    /// # use revpi::picontrol::raw::PiControlRaw;
+    /// let raw = PiControlRaw::new().unwrap();
+    /// raw.set_output_watchdog(20);
+    /// ```
     pub fn set_output_watchdog(&self, mut millis: u32) {
         unsafe { raw::set_output_watchdog(self.0.as_raw_fd(), &mut millis) }.unwrap();
     }
@@ -405,6 +603,16 @@ impl PiControlRaw {
     /// Blocks until an event occurs in the piControl driver.
     ///
     /// Returns the event.
+    ///
+    /// # Examples
+    /// ```no_run
+    /// # use revpi::picontrol::raw::{PiControlRaw, Event};
+    /// let raw = PiControlRaw::new().unwrap();
+    /// let event = raw.wait_for_event();
+    /// if matches!(Event::Reset, event) {
+    ///     println!("piControl was reset");
+    /// }
+    /// ```
     pub fn wait_for_event(&self) -> Event {
         let mut event = 0i32;
         unsafe { raw::wait_for_event(self.0.as_raw_fd(), &mut event) }.unwrap();
