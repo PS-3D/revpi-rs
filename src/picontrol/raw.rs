@@ -606,7 +606,8 @@ impl PiControlRaw {
     ///
     /// # Examples
     /// ```no_run
-    /// # use revpi::picontrol::raw::{PiControlRaw, Event};
+    /// # use revpi::picontrol::raw::{PiControlRaw, raw};
+    /// use raw::Event;
     /// let raw = PiControlRaw::new().unwrap();
     /// let event = raw.wait_for_event();
     /// if matches!(Event::Reset, event) {
