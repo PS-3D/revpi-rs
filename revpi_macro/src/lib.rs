@@ -118,12 +118,12 @@
 //! ```
 //!
 
-use std::fs::File;
 use proc_macro::TokenStream;
 use proc_macro2::TokenStream as TokenStream2;
 use quote::{format_ident, quote};
 use revpi_rsc::{InOutMem, RSC};
 use serde_json;
+use std::fs::File;
 use syn::{parse::Parse, parse_macro_input, Ident, LitStr};
 
 struct JsonInput {

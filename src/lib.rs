@@ -26,8 +26,8 @@
 //! [rsc]. [rsc] is enabled by default, while [macro](revpi_macro) is not.
 
 pub mod picontrol;
-#[cfg(feature = "rsc")]
-pub use revpi_rsc as rsc;
 #[cfg(feature = "macro")]
 pub use revpi_macro::{revpi, revpi_from_json};
+#[cfg(feature = "rsc")]
+pub use revpi_rsc as rsc;
 pub(crate) mod util;
