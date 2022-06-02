@@ -168,11 +168,13 @@ unsafe fn ioctl<T>(fd: RawFd, request: KBRequests, argp: T) -> Result<u32, i32> 
 
 /// Resets the the RevPi I/O module comms and config
 ///
-/// If the bridge takes too long to come up, `Err(`[`libc::ETIMEDOUT`]`)` is returened.
-/// If fd is not a valid file descriptor, `Err(`[`libc::EBADF`]`)` is returened.
-/// If fd is not a character special device or doesn't refer to "/dev/piControl0",
-/// `Err(`[`libc::ENOTTY`]`)` is returened.
+/// # Errors
+/// If the bridge takes too long to come up, `libc::ETIMEDOUT` is returened.
+/// If fd is not a valid file descriptor, `libc::EBADF` is returened.
+/// If fd is not a character special device or doesn't refer to `"/dev/piControl0"`,
+/// `libc::ENOTTY` is returened.
 ///
+/// # Further Informentation
 /// For more information see `man ioctl`, `man picontrol_ioctl` or the kernel module
 pub unsafe fn reset(fd: RawFd) -> Result<u32, i32> {
     ioctl(fd, KBRequests::Reset, 0u64)
@@ -182,13 +184,15 @@ pub unsafe fn reset(fd: RawFd) -> Result<u32, i32> {
 ///
 /// `devs` must be a pointer to an array of at least [`REV_PI_DEV_CNT_MAX`] [`SDeviceInfo`] entries.
 ///
+/// # Errors
 /// If successful, the number of devices written will be returned.\
-/// If the kernel module ran out of memory, `Err(`[`libc::ENOMEM`]`)` is returned.
-/// If `devs` wasn't accessible `Err(`[`libc::EFAULT`]`)` is returned.
-/// If fd is not a valid file descriptor, `Err(`[`libc::EBADF`]`)` is returened.
-/// If fd is not a character special device or doesn't refer to "/dev/piControl0",
-/// `Err(`[`libc::ENOTTY`]`)` is returened.
+/// If the kernel module ran out of memory, `libc::ENOMEM` is returned.
+/// If `devs` wasn't accessible libc::EFAULT` is returned.
+/// If fd is not a valid file descriptor, `libc::EBADF` is returened.
+/// If fd is not a character special device or doesn't refer to `"/dev/piControl0"`,
+/// libc::ENOTTY` is returened.
 ///
+/// # Further Informentation
 /// For more information see `man ioctl`, `man picontrol_ioctl` or the kernel module
 pub unsafe fn get_device_info_list(fd: RawFd, devs: *mut SDeviceInfo) -> Result<u32, i32> {
     ioctl(fd, KBRequests::GetDeviceInfoList, devs)
@@ -200,12 +204,14 @@ pub unsafe fn get_device_info_list(fd: RawFd, devs: *mut SDeviceInfo) -> Result<
 /// `dev` must point to a [`SDeviceInfo`] struct with `i8uAddress` set to the
 /// desired device address.
 ///
-/// If the device wasn't found, `Err(`[`libc::ENXIO`]`)` is returned.\
-/// If `dev` wasn't accessible `Err(`[`libc::EFAULT`]`)` is returned.\
-/// If fd is not a valid file descriptor, `Err(`[`libc::EBADF`]`)` is returened.\
-/// If fd is not a character special device or doesn't refer to "/dev/piControl0",
-/// `Err(`[`libc::ENOTTY`]`)` is returened.\
+/// # Errors
+/// If the device wasn't found, libc::ENXIO` is returned.\
+/// If `dev` wasn't accessible `libc::EFAULT` is returned.\
+/// If fd is not a valid file descriptor, `libc::EBADF` is returened.\
+/// If fd is not a character special device or doesn't refer to `"/dev/piControl0"`,
+/// libc::ENOTTY` is returened.\
 ///
+/// # Further Informentation
 /// For more information see `man ioctl`, `man picontrol_ioctl` or the kernel module
 pub unsafe fn get_device_info(fd: RawFd, dev: *mut SDeviceInfo) -> Result<u32, i32> {
     ioctl(fd, KBRequests::GetDeviceInfo, dev)
@@ -217,12 +223,14 @@ pub unsafe fn get_device_info(fd: RawFd, dev: *mut SDeviceInfo) -> Result<u32, i
 /// to the desired value. If `0 <= i8uBit <= 7` then a single bit is read, `i8uValue`
 /// will be either `1` or `0`. If `i8uBit >= 8` then a whole byte will be read.
 ///
+/// # Errors
 /// If the address was larger than [`KB_PI_LEN`], the bridge wasn't running or
-/// `val` wasn't accessible `Err(`[`libc::EFAULT`]`)` is returned.
-/// If fd is not a valid file descriptor, `Err(`[`libc::EBADF`]`)` is returened.
-/// If fd is not a character special device or doesn't refer to "/dev/piControl0",
-/// `Err(`[`libc::ENOTTY`]`)` is returened.
+/// `val` wasn't accessible libc::EFAULT` is returned.
+/// If fd is not a valid file descriptor, `libc::EBADF` is returened.
+/// If fd is not a character special device or doesn't refer to `"/dev/piControl0"`,
+/// libc::ENOTTY` is returened.
 ///
+/// # Further Informentation
 /// For more information see `man ioctl`, `man picontrol_ioctl` or the kernel module
 pub unsafe fn get_value(fd: RawFd, val: *mut SPIValue) -> Result<u32, i32> {
     ioctl(fd, KBRequests::GetValue, val)
@@ -232,12 +240,14 @@ pub unsafe fn get_value(fd: RawFd, val: *mut SPIValue) -> Result<u32, i32> {
 ///
 /// `val` must point to a [`SPIValue`] struct with its members initialized properly.
 ///
+/// # Errors
 /// If the address was larger than [`KB_PI_LEN`], the bridge wasn't running or
-/// `val` wasn't accessible `Err(`[`libc::EFAULT`]`)` is returned.
-/// If fd is not a valid file descriptor, `Err(`[`libc::EBADF`]`)` is returened.
-/// If fd is not a character special device or doesn't refer to "/dev/piControl0",
-/// `Err(`[`libc::ENOTTY`]`)` is returened.
+/// `val` wasn't accessible `libc::EFAULT` is returned.
+/// If fd is not a valid file descriptor, `libc::EBADF` is returened.
+/// If fd is not a character special device or doesn't refer to `"/dev/piControl0"`,
+/// libc::ENOTTY` is returened.
 ///
+/// # Further Informentation
 /// For more information see [`get_value`], `man ioctl`, `man picontrol_ioctl`
 /// or the kernel module
 pub unsafe fn set_value(fd: RawFd, val: *mut SPIValue) -> Result<u32, i32> {
@@ -249,13 +259,15 @@ pub unsafe fn set_value(fd: RawFd, val: *mut SPIValue) -> Result<u32, i32> {
 /// `var` must point to a [`SPIVariable`] struct with `strVarName` set to a
 /// null-terminated string with the name of the desired variable set in Pictory.
 ///
+/// # Errors
 /// If the variable wasn't found, the bridge wasn't running or var wasn't accessible
-/// `Err(`[`libc::EFAULT`]`)` is returned.
-/// If there were no variable entries, `Err(`[`libc::ENOENT`]`)` is returned.
-/// If fd is not a valid file descriptor, `Err(`[`libc::EBADF`]`)` is returened.
-/// If fd is not a character special device or doesn't refer to "/dev/piControl0",
-/// `Err(`[`libc::ENOTTY`]`)` is returened.
+/// `libc::EFAULT` is returned.
+/// If there were no variable entries, `libc::ENOENT` is returned.
+/// If fd is not a valid file descriptor, libc::EBADF` is returened.
+/// If fd is not a character special device or doesn't refer to `"/dev/piControl0"`,
+/// `libc::ENOTTY` is returened.
 ///
+/// # Further Informentation
 /// For more information see `man ioctl`, `man picontrol_ioctl` or the kernel module
 pub unsafe fn find_variable(fd: RawFd, var: *mut SPIVariable) -> Result<u32, i32> {
     ioctl(fd, KBRequests::FindVariable, var)
@@ -266,11 +278,13 @@ pub unsafe fn find_variable(fd: RawFd, var: *mut SPIVariable) -> Result<u32, i32
 /// `image` must point to the new processimage. It needs to be [`KB_PI_LEN`] bytes
 /// long. Currently only one process should call this ioctl.
 ///
-/// If `image` wasn't accessible `Err(`[`libc::EFAULT`]`)` is returned.
-/// If fd is not a valid file descriptor, `Err(`[`libc::EBADF`]`)` is returened.
-/// If fd is not a character special device or doesn't refer to "/dev/piControl0",
-/// `Err(`[`libc::ENOTTY`]`)` is returened.
+/// # Errors
+/// If `image` wasn't accessible libc::EFAULT` is returned.
+/// If fd is not a valid file descriptor, `libc::EBADF` is returened.
+/// If fd is not a character special device or doesn't refer to `"/dev/piControl0"`,
+/// `libc::ENOTTY` is returened.
 ///
+/// # Further Informentation
 /// For more information see `man ioctl`, `man picontrol_ioctl` or the kernel module
 pub unsafe fn set_exported_outputs(fd: RawFd, image: *const u8) -> Result<u32, i32> {
     ioctl(fd, KBRequests::SetExportedOutputs, image)
@@ -281,13 +295,15 @@ pub unsafe fn set_exported_outputs(fd: RawFd, image: *const u8) -> Result<u32, i
 /// `module` must be a valid address of a module. This can only be done while
 /// exactly one module is connected.
 ///
-/// If the RevPi isnt a Core or Connect, `Err(`[`libc::EPERM`]`)` is returned.
+/// # Errors
+/// If the RevPi isnt a Core or Connect, `libc::EPERM` is returned.
 /// If the bridge isn't running or too many or too little modules are connected,
-/// `Err(`[`libc::EFAULT`]`)` is returned.
-/// If fd is not a valid file descriptor, `Err(`[`libc::EBADF`]`)` is returened.
-/// If fd is not a character special device or doesn't refer to "/dev/piControl0",
-/// `Err(`[`libc::ENOTTY`]`)` is returened.
+/// `libc::EFAULT` is returned.
+/// If fd is not a valid file descriptor, `libc::EBADF` is returened.
+/// If fd is not a character special device or doesn't refer to `"/dev/piControl0"`,
+/// `libc::ENOTTY` is returened.
 ///
+/// # Further Informentation
 /// For more information see `man ioctl`, `man picontrol_ioctl` or the kernel module
 pub unsafe fn update_device_firmware(fd: RawFd, module: u32) -> Result<u32, i32> {
     ioctl(fd, KBRequests::UpdateDeviceFirmware, module)
@@ -299,15 +315,17 @@ pub unsafe fn update_device_firmware(fd: RawFd, module: u32) -> Result<u32, i32>
 /// the address of the desired module. For each counter to be reset, the corresponding
 /// bit in `i16uBitfield` must be set. `i16uBitfield` must not be `0`.
 ///
-/// If the RevPi isnt a Core or Connect, `Err(`[`libc::EPERM`]`)` is returned.
-/// If the module wasn't found or if the bitfield was `0`, `Err(`[`libc::EINVAL`]`)`
+/// # Errors
+/// If the RevPi isnt a Core or Connect, `libc::EPERM` is returned.
+/// If the module wasn't found or if the bitfield was `0`, `libc::EINVAL`
 /// is returned.
-/// If the bridge wasn't running or ctr wasn't accessible `Err(`[`libc::EFAULT`]`)`
+/// If the bridge wasn't running or ctr wasn't accessible `libc::EFAULT`
 /// is returned.
-/// If fd is not a valid file descriptor, `Err(`[`libc::EBADF`]`)` is returened.
-/// If fd is not a character special device or doesn't refer to "/dev/piControl0",
-/// `Err(`[`libc::ENOTTY`]`)` is returened.
+/// If fd is not a valid file descriptor, `libc::EBADF` is returened.
+/// If fd is not a character special device or doesn't refer to `"/dev/piControl0"`,
+/// `libc::ENOTTY` is returened.
 ///
+/// # Further Informentation
 /// For more information see `man ioctl`, `man picontrol_ioctl` or the kernel module
 pub unsafe fn dio_reset_counter(fd: RawFd, ctr: *mut SDIOResetCounter) -> Result<u32, i32> {
     ioctl(fd, KBRequests::DIOResetCounter, ctr)
@@ -318,11 +336,13 @@ pub unsafe fn dio_reset_counter(fd: RawFd, ctr: *mut SDIOResetCounter) -> Result
 /// `msg` must point to a string with a length of at least [`REV_PI_ERROR_MSG_LEN`]
 /// bytes. The message will be written into it.
 ///
-/// If `msg` wasn't accessible `Err(`[`libc::EFAULT`]`)` is returned.
-/// If fd is not a valid file descriptor, `Err(`[`libc::EBADF`]`)` is returened.
-/// If fd is not a character special device or doesn't refer to "/dev/piControl0",
-/// `Err(`[`libc::ENOTTY`]`)` is returened.
+/// # Errors
+/// If `msg` wasn't accessible `libc::EFAULT` is returned.
+/// If fd is not a valid file descriptor, `libc::EBADF` is returened.
+/// If fd is not a character special device or doesn't refer to `"/dev/piControl0"`,
+/// `libc::ENOTTY` is returened.
 ///
+/// # Further Informentation
 /// For more information see `man ioctl`, `man picontrol_ioctl` or the kernel module
 pub unsafe fn get_last_message(fd: RawFd, msg: *mut i8) -> Result<u32, i32> {
     ioctl(fd, KBRequests::GetLastMessage, msg)
@@ -332,12 +352,15 @@ pub unsafe fn get_last_message(fd: RawFd, msg: *mut i8) -> Result<u32, i32> {
 ///
 /// `stop` must point to `0` to start, `1` to stop or `2` to toggle I/O communication.
 ///
+/// # Errors
 /// If the call is successfull, the new mode will be returned.\
-/// If the bridge wasn't running or stop wasn't accessible `Err(`[`libc::EFAULT`]`)`
+/// If the bridge wasn't running or stop wasn't accessible `libc::EFAULT`
 /// is returned.
-/// If fd is not a valid file descriptor, `Err(`[`libc::EBADF`]`)` is returened.
-/// If fd is not a character special device or doesn't refer to "/dev/piControl0",
-/// `Err(`[`libc::ENOTTY`]`)` is returened.
+/// If fd is not a valid file descriptor, `libc::EBADF` is returened.
+/// If fd is not a character special device or doesn't refer to `"/dev/piControl0"`,
+/// `libc::ENOTTY` is returened.
+///
+/// # Further Informentation
 /// For more information see `man ioctl`, `man picontrol_ioctl` or the kernel module
 pub unsafe fn stop_io(fd: RawFd, stop: *mut i32) -> Result<u32, i32> {
     ioctl(fd, KBRequests::StopIO, stop)
@@ -347,11 +370,13 @@ pub unsafe fn stop_io(fd: RawFd, stop: *mut i32) -> Result<u32, i32> {
 ///
 /// `millis` must point to the watchdog period in milliseconds.
 ///
-/// If `millis` wasn't accessible `Err(`[`libc::EFAULT`]`)` is returned.
-/// If fd is not a valid file descriptor, `Err(`[`libc::EBADF`]`)` is returened.
-/// If fd is not a character special device or doesn't refer to "/dev/piControl0",
-/// `Err(`[`libc::ENOTTY`]`)` is returened.
+/// # Errors
+/// If `millis` wasn't accessible `libc::EFAULT` is returned.
+/// If fd is not a valid file descriptor, `libc::EBADF` is returened.
+/// If fd is not a character special device or doesn't refer to `"/dev/piControl0"`,
+/// `libc::ENOTTY` is returened.
 ///
+/// # Further Informentation
 /// For more information see `man ioctl`, `man picontrol_ioctl` or the kernel module
 pub unsafe fn set_output_watchdog(fd: RawFd, millis: *mut u32) -> Result<u32, i32> {
     ioctl(fd, KBRequests::SetOutputWatchdog, millis)
@@ -363,11 +388,13 @@ pub unsafe fn set_output_watchdog(fd: RawFd, millis: *mut u32) -> Result<u32, i3
 /// of the driver is supported.\
 /// This is a blocking call.
 ///
-/// If `event` wasn't accessible `Err(`[`libc::EFAULT`]`)` is returned.
-/// If fd is not a valid file descriptor, `Err(`[`libc::EBADF`]`)` is returened.
-/// If fd is not a character special device or doesn't refer to "/dev/piControl0",
-/// `Err(`[`libc::ENOTTY`]`)` is returened.
+/// # Errors
+/// If `event` wasn't accessible `libc::EFAULT` is returned.
+/// If fd is not a valid file descriptor, `libc::EBADF` is returened.
+/// If fd is not a character special device or doesn't refer to `"/dev/piControl0"`,
+/// `libc::ENOTTY` is returened.
 ///
+/// # Further Informentation
 /// For more information see `man ioctl`, `man picontrol_ioctl` or the kernel module
 pub unsafe fn wait_for_event(fd: RawFd, event: *mut i32) -> Result<u32, i32> {
     ioctl(fd, KBRequests::WaitForEvent, event)
