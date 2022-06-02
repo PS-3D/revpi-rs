@@ -112,6 +112,7 @@ pub struct PiControl {
 impl PiControl {
     /// Creates a new PiControl object
     ///
+    /// # Errors
     /// Will return a [`PiControlError::IoError`] if the processimage can't be
     /// opened
     ///
@@ -134,6 +135,7 @@ impl PiControl {
     /// Sets the given value in the processimage. `name` is the name given to the
     /// field that should be written to in PiCtory.
     ///
+    /// # Errors
     /// If the length found in the name lookup and the length of `value` don't
     /// match, a [`PiControlError::InvalidArgument`] is returned. Same thing if
     /// the name can't be found
@@ -162,10 +164,10 @@ impl PiControl {
     }
 
     /// Gets the given value from the processimage. `name` is the name given to the
-    /// field that should be written to in PiCtory.
+    /// field that should be written to in PiCtory. The variant of the returned
+    /// [`Value`] depends on the length of the field that is read.
     ///
-    /// The variant of the returned [`Value`] depends on the length of the field
-    /// that is read.
+    /// # Errors
     /// If the name can't be found, a [`PiControlError::InvalidArgument`] is
     /// returned.
     ///
