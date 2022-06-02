@@ -5,7 +5,7 @@
 pub mod raw;
 
 use self::raw::{
-    SDIOResetCounter, SDeviceInfo, SPIValue, SPIVariable, KB_PI_LEN, REV_PI_DEV_CNT_MAX,
+    Event, SDIOResetCounter, SDeviceInfo, SPIValue, SPIVariable, KB_PI_LEN, REV_PI_DEV_CNT_MAX,
     REV_PI_ERROR_MSG_LEN,
 };
 use super::PiControlError;
@@ -15,16 +15,6 @@ use std::{
     fs::File,
     os::unix::prelude::{AsRawFd, FileExt},
 };
-
-/// Events that can occur in piControl
-///
-/// Currently only Reset is supported
-#[derive(Debug)]
-#[repr(i32)]
-pub enum Event {
-    /// Occurs if the driver gets reset
-    Reset = 1,
-}
 
 /// Bit inside a byte which to write to or read from
 #[derive(Debug)]

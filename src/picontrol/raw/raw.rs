@@ -19,7 +19,7 @@ pub const PICONFIG_FILE_WHEEZY: &str = "/opt/KUNBUS/config.rsc";
 
 /// Rust binding for the `SDeviceInfo` struct defined in [`piControl.h`](https://github.com/RevolutionPi/piControl/blob/master/piControl.h#L124)
 #[allow(non_snake_case)]
-#[derive(Debug, Default)]
+#[derive(Debug, Default, PartialEq, Eq)]
 #[repr(C)]
 pub struct SDeviceInfo {
     pub i8uAddress: u8,
@@ -69,7 +69,7 @@ pub struct SDeviceInfo {
 
 /// Rust binding for the `SPIValue` struct defined in [`piControl.h`](https://github.com/RevolutionPi/piControl/blob/master/piControl.h#L163)
 #[allow(non_snake_case)]
-#[derive(Debug, Default)]
+#[derive(Debug, Default, PartialEq, Eq)]
 #[repr(C)]
 pub struct SPIValue {
     pub i16uAddress: u16,
@@ -79,7 +79,7 @@ pub struct SPIValue {
 
 /// Rust binding for the `SPIVariable` struct defined in [`piControl.h`](https://github.com/RevolutionPi/piControl/blob/master/piControl.h#L170)
 #[allow(non_snake_case)]
-#[derive(Debug, Default)]
+#[derive(Debug, Default, PartialEq, Eq)]
 #[repr(C)]
 pub struct SPIVariable {
     pub strVarName: [u8; 32],
@@ -90,11 +90,21 @@ pub struct SPIVariable {
 
 /// Rust binding for the `SDIOResetCounter` struct defined in [`piControl.h`](https://github.com/RevolutionPi/piControl/blob/master/piControl.h#L178)
 #[allow(non_snake_case)]
-#[derive(Debug, Default)]
+#[derive(Debug, Default, PartialEq, Eq)]
 #[repr(C)]
 pub struct SDIOResetCounter {
     pub i8uAddress: u8,
     pub i16uBitfield: u16,
+}
+
+/// Rust bindings for the Events defined in [`piControl.h`](https://github.com/RevolutionPi/piControl/blob/master/piControl.h#L116)
+///
+/// Currently only Reset is supported
+#[derive(Debug, PartialEq, Eq)]
+#[repr(i32)]
+pub enum Event {
+    /// Occurs if the driver gets reset
+    Reset = 1,
 }
 
 // #[allow(non_snake_case)]
@@ -107,9 +117,9 @@ pub struct SDIOResetCounter {
 // }
 
 /// Rust bindings for the ioctls defined in [`piControl.h`](https://github.com/RevolutionPi/piControl/blob/master/piControl.h#L94)
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 #[repr(u64)]
-enum KBRequests {
+pub enum KBRequests {
     // reset the piControl driver including the config file
     Reset = 0x4b0c,
     // get the device info of all detected devices
