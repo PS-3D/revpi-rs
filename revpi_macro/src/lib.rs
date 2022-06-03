@@ -124,7 +124,7 @@ use quote::{format_ident, quote};
 use revpi_rsc::{InOutMem, RSC};
 use serde_json;
 use std::fs::File;
-use syn::{parse::Parse, parse_macro_input, Ident, LitStr};
+use syn::{parse::Parse, parse_macro_input, Ident, LitStr, Token};
 
 struct JsonInput {
     name: Ident,
@@ -133,9 +133,12 @@ struct JsonInput {
 
 impl Parse for JsonInput {
     fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
+        let name = input.parse()?;
+        input.parse::<Token!(,)>()?;
+        let path = input.parse()?;
         Ok(JsonInput {
-            name: input.parse()?,
-            path: input.parse()?,
+            name,
+            path,
         })
     }
 }
