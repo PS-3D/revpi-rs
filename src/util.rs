@@ -1,7 +1,7 @@
 // Basically does same as anyhow::ensure
 macro_rules! ensure {
     ($cond:expr, $err:expr) => {
-        if $cond {
+        if !$cond {
             return Err($err);
         }
     };
