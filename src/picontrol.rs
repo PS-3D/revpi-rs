@@ -23,7 +23,7 @@
 
 pub mod raw;
 
-use self::raw::{raw::SPIVariable, Bit, PiControlRaw};
+use self::raw::{raw::SPIVariable, PiControlRaw};
 use crate::util::ensure;
 use std::{
     ffi::{self, CString},
@@ -155,7 +155,7 @@ impl PiControl {
         match value {
             Value::Bit(b) => unsafe {
                 self.inner
-                    .set_bit(name.i16uAddress, Bit::from(name.i8uBit), b)
+                    .set_bit(name.i16uAddress, name.i8uBit, b)
             },
             Value::Byte(b) => unsafe { self.inner.set_byte(name.i16uAddress, b) },
             Value::Word(w) => unsafe { self.inner.set_word(name.i16uAddress, w) },
@@ -181,7 +181,7 @@ impl PiControl {
     pub fn get_value(&self, name: &str) -> Result<Value, PiControlError> {
         let name = self.find_variable(name)?;
         match name.i16uLength {
-            1 => unsafe { self.inner.get_bit(name.i16uAddress, Bit::from(name.i8uBit)) }
+            1 => unsafe { self.inner.get_bit(name.i16uAddress, name.i8uBit) }
                 .map(Value::from),
             8 => unsafe { self.inner.get_byte(name.i16uAddress) }.map(Value::from),
             16 => unsafe { self.inner.get_word(name.i16uAddress) }.map(Value::from),

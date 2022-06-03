@@ -143,21 +143,6 @@ impl Parse for JsonInput {
     }
 }
 
-fn u8_to_bit(b: u8) -> String {
-    let bit = match b {
-        0 => "Zero",
-        1 => "One",
-        2 => "Two",
-        3 => "Three",
-        4 => "Four",
-        5 => "Five",
-        6 => "Six",
-        7 => "Seven",
-        _ => panic!("integer out of range of enum"),
-    };
-    format!("revpi::picontrol::raw::Bit::{}", bit)
-}
-
 // produces a getter of the given InOutMem
 // since InOutMem only contains the offset inside the module, we also need
 // the module offset
@@ -168,7 +153,7 @@ fn get_fn(mod_offset: u64, item: &InOutMem) -> TokenStream2 {
         1 => (
             "bool",
             "get_bit",
-            format!("{}, {}", address, u8_to_bit(item.bit_position.unwrap())),
+            format!("{}, {}", address, item.bit_position.unwrap()),
         ),
         8 => ("u8", "get_byte", format!("{}", address)),
         16 => ("u16", "get_word", format!("{}", address)),
@@ -199,7 +184,7 @@ fn set_fn(mod_offset: u64, item: &InOutMem) -> TokenStream2 {
             format!(
                 "{}, {}, bit",
                 address,
-                u8_to_bit(item.bit_position.unwrap())
+                item.bit_position.unwrap()
             ),
         ),
         8 => ("byte: u8", "set_byte", format!("{}, byte", address)),

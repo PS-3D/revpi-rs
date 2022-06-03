@@ -16,41 +16,6 @@ use std::{
     os::unix::prelude::{AsRawFd, FileExt},
 };
 
-/// Bit inside a byte which to write to or read from
-#[derive(Debug)]
-#[repr(u8)]
-pub enum Bit {
-    Zero = 0,
-    One,
-    Two,
-    Three,
-    Four,
-    Five,
-    Six,
-    Seven,
-}
-
-impl From<u8> for Bit {
-    /// Converts u8 to Bit
-    ///
-    /// # Panics
-    /// Will panic if `v > 7`
-    fn from(v: u8) -> Self {
-        use Bit::*;
-        match v {
-            0 => Zero,
-            1 => One,
-            2 => Two,
-            3 => Three,
-            4 => Four,
-            5 => Five,
-            6 => Six,
-            7 => Seven,
-            _ => panic!("integer out of range of enum"),
-        }
-    }
-}
-
 /// Provides semi-raw access to the RevPi
 ///
 /// The focus lies on providing error-checking where possible but not at the
@@ -198,13 +163,13 @@ impl PiControlRaw {
     ///
     /// # Examples
     /// ```no_run
-    /// # use revpi::picontrol::raw::{PiControlRaw, Bit};
+    /// # use revpi::picontrol::raw::PiControlRaw;
     /// let raw = PiControlRaw::new().unwrap();
-    /// let bit = unsafe { raw.get_bit(1337, Bit::Zero) }.unwrap();
+    /// let bit = unsafe { raw.get_bit(1337, 0) }.unwrap();
     /// println!("{}", bit);
     /// ```
-    pub unsafe fn get_bit(&self, address: u16, bit: Bit) -> Result<bool, PiControlError> {
-        self.get_value(address, bit as u8).map(|r| r >= 1)
+    pub unsafe fn get_bit(&self, address: u16, bit: u8) -> Result<bool, PiControlError> {
+        self.get_value(address, bit).map(|r| r >= 1)
     }
 
     /// Gets a byte from the processimage.
@@ -312,17 +277,17 @@ impl PiControlRaw {
     ///
     /// # Examples
     /// ```no_run
-    /// # use revpi::picontrol::raw::{PiControlRaw, Bit};
+    /// # use revpi::picontrol::raw::PiControlRaw;
     /// let raw = PiControlRaw::new().unwrap();
-    /// unsafe { raw.set_bit(1337, Bit::Zero, true) }.unwrap();
+    /// unsafe { raw.set_bit(1337, 0, true) }.unwrap();
     /// ```
     pub unsafe fn set_bit(
         &self,
         address: u16,
-        bit: Bit,
+        bit: u8,
         value: bool,
     ) -> Result<(), PiControlError> {
-        self.set_value(address, bit as u8, value as u8)
+        self.set_value(address, bit, value as u8)
     }
 
     /// Writes a byte to the processimage.
