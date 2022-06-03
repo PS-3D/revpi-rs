@@ -162,7 +162,7 @@ fn get_fn(mod_offset: u64, item: &InOutMem) -> TokenStream2 {
     };
 
     format!(
-        "pub fn {}() -> Result<{}, revpi::picontrol::raw::PiControRawError> {{
+        "pub fn {}(&self) -> Result<{}, revpi::picontrol::PiControlError> {{
     unsafe {{ self.inner.{}({}) }}
 }}",
         name, ret, function, fnargs
@@ -194,7 +194,7 @@ fn set_fn(mod_offset: u64, item: &InOutMem) -> TokenStream2 {
     };
 
     format!(
-        "pub fn {}({}) -> Result<(), revpi::picontrol::raw::PiControlRawError> {{
+        "pub fn {}(&self, {}) -> Result<(), revpi::picontrol::PiControlError> {{
     unsafe {{ self.inner.{}({}) }}
 }}",
         name, args, function, fnargs
@@ -210,7 +210,7 @@ fn from_json(rsc: &RSC, name: Ident) -> TokenStream2 {
         for i in d.inp.values() {
             functions.extend(get_fn(d.offset, i));
         }
-        for o in d.inp.values() {
+        for o in d.out.values() {
             functions.extend(get_fn(d.offset, o));
             functions.extend(set_fn(d.offset, o));
         }
@@ -223,7 +223,7 @@ fn from_json(rsc: &RSC, name: Ident) -> TokenStream2 {
         inner: revpi::picontrol::raw::PiControlRaw,
     }
     impl #name {
-        pub fn new() -> Result<Self, revpi::picontrol::raw::PiControlRawError> {
+        pub fn new() -> Result<Self, revpi::picontrol::PiControlError> {
             Ok(Self {
                 inner: revpi::picontrol::raw::PiControlRaw::new()?,
             })
