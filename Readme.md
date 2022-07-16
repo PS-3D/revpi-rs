@@ -2,7 +2,9 @@
 
 This crate lets you control your [RevolutionPi](https://revolutionpi.com/) with rust
 
-## PiControl
+## Usage
+
+### PiControl
 
 revpi-rs provides multiple ways to interface with piControl, the easiest being the `PiControl` struct:
 
@@ -30,7 +32,7 @@ println!("{}", val); // e.g. 42
 
 Both examples do the same thing, just in different ways
 
-## RSC
+### RSC
 
 Types to read and write the rsc file format are provided with the feature `rsc`, which is enabled by default.
 These types implement serde's Serialize and Deserialize traits so they can be used with serde_json:
@@ -44,3 +46,10 @@ let f = File::open("/etc/revpi/config.rsc").unwrap();
 let rsc: RSC = serde_json::from_reader(f).unwrap();
 println!("{:?}", rsc);
 ```
+
+## Release
+
+This library is not really released yet, this is a **prerelease**.
+The public interface should be somewhat final, but don't count on it.
+
+If you desperately need this library to be finished or if you need a specific feature, consider contributing or make an issue.
