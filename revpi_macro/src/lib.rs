@@ -215,6 +215,7 @@ fn from_json(rsc: &RSC, name: Ident) -> TokenStream2 {
     quote!(struct #name {
         inner: revpi::raw::PiControlRaw,
     }
+    #[allow(non_snake_case)]
     impl #name {
         pub fn new() -> Result<Self, revpi::PiControlError> {
             Ok(Self {
