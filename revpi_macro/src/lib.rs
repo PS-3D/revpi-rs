@@ -159,7 +159,7 @@ fn get_fn(mod_offset: u64, item: &InOutMem) -> TokenStream2 {
     };
 
     format!(
-        "pub fn {}(&self) -> Result<{}, revpi::PiControlError> {{
+        "pub fn {}(&self) -> std::result::Result<{}, revpi::PiControlError> {{
     unsafe {{ self.inner.{}({}) }}
 }}",
         name, ret, function, fnargs
@@ -187,7 +187,7 @@ fn set_fn(mod_offset: u64, item: &InOutMem) -> TokenStream2 {
     };
 
     format!(
-        "pub fn {}(&self, {}) -> Result<(), revpi::PiControlError> {{
+        "pub fn {}(&self, {}) -> std::result::Result<(), revpi::PiControlError> {{
     unsafe {{ self.inner.{}({}) }}
 }}",
         name, args, function, fnargs
@@ -217,7 +217,7 @@ fn from_json(rsc: &RSC, name: Ident) -> TokenStream2 {
     }
     #[allow(non_snake_case)]
     impl #name {
-        pub fn new() -> Result<Self, revpi::PiControlError> {
+        pub fn new() -> std::result::Result<Self, revpi::PiControlError> {
             Ok(Self {
                 inner: revpi::raw::PiControlRaw::new()?,
             })
