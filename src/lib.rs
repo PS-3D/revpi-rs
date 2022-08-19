@@ -3,7 +3,7 @@
 //! ## IO
 //! [`PiControl`] gives you you basic, safe IO with the RevPi:
 //! ```no_run
-//! # use revpi::picontrol::{PiControl, Value};
+//! # use revpi::{PiControl, Value};
 //! let pi = PiControl::new().unwrap();
 //! pi.set_value("RevPiLED", Value::Byte(42)).unwrap();
 //! ```
@@ -13,7 +13,7 @@
 //! the [`raw`] module, which, contrary to [`PiControl`], provides access to *all*
 //! RevPi functions:
 //! ```no_run
-//! # use revpi::picontrol::raw::{PiControlRaw};
+//! # use revpi::raw::{PiControlRaw};
 //! let raw = PiControlRaw::new().unwrap();
 //! unsafe { raw.update_device_firmware(31) };
 //! ```

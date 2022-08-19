@@ -95,7 +95,7 @@ impl PiControl {
     ///
     /// # Example
     /// ```no_run
-    /// # use revpi::picontrol::PiControl;
+    /// # use revpi::PiControl;
     /// let pi = PiControl::new().unwrap();
     /// ```
     pub fn new() -> Result<Self, PiControlError> {
@@ -119,7 +119,7 @@ impl PiControl {
     ///
     /// # Example
     /// ```no_run
-    /// # use revpi::picontrol::{PiControl, Value};
+    /// # use revpi::{PiControl, Value};
     /// let pi = PiControl::new().unwrap();
     /// pi.set_value("RevPiLED", Value::Byte(42)).unwrap();
     /// ```
@@ -150,7 +150,7 @@ impl PiControl {
     ///
     /// # Example
     /// ```no_run
-    /// # use revpi::picontrol::{PiControl, Value};
+    /// # use revpi::{PiControl, Value};
     /// let pi = PiControl::new().unwrap();
     /// let val = pi.get_value("Core_Temperature").unwrap();
     /// assert_eq!(val, Value::Byte(42)); // just an example value

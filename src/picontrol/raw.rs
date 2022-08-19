@@ -37,7 +37,7 @@ impl PiControlRaw {
     ///
     /// # Examples
     /// ```no_run
-    /// # use revpi::picontrol::raw::PiControlRaw;
+    /// # use revpi::raw::PiControlRaw;
     /// let raw = PiControlRaw::new().unwrap();
     /// ```
     pub fn new() -> Result<Self, PiControlError> {
@@ -59,7 +59,7 @@ impl PiControlRaw {
     ///
     /// # Examples
     /// ```no_run
-    /// # use revpi::picontrol::raw::PiControlRaw;
+    /// # use revpi::raw::PiControlRaw;
     /// let raw = PiControlRaw::new().unwrap();
     /// unsafe { raw.reset() };
     /// ```
@@ -81,7 +81,7 @@ impl PiControlRaw {
     ///
     /// # Examples
     /// ```no_run
-    /// # use revpi::picontrol::raw::PiControlRaw;
+    /// # use revpi::raw::PiControlRaw;
     /// let raw = PiControlRaw::new().unwrap();
     /// let devs = raw.get_device_info_list();
     /// println!("{:?}", devs);
@@ -113,7 +113,7 @@ impl PiControlRaw {
     ///
     /// # Examples
     /// ```no_run
-    /// # use revpi::picontrol::raw::PiControlRaw;
+    /// # use revpi::raw::PiControlRaw;
     /// let raw = PiControlRaw::new().unwrap();
     /// let dev = raw.get_device_info(31).unwrap();
     /// println!("{:?}", dev);
@@ -163,7 +163,7 @@ impl PiControlRaw {
     ///
     /// # Examples
     /// ```no_run
-    /// # use revpi::picontrol::raw::PiControlRaw;
+    /// # use revpi::raw::PiControlRaw;
     /// let raw = PiControlRaw::new().unwrap();
     /// let bit = unsafe { raw.get_bit(1337, 0) }.unwrap();
     /// println!("{}", bit);
@@ -187,7 +187,7 @@ impl PiControlRaw {
     ///
     /// # Examples
     /// ```no_run
-    /// # use revpi::picontrol::raw::PiControlRaw;
+    /// # use revpi::raw::PiControlRaw;
     /// let raw = PiControlRaw::new().unwrap();
     /// let byte = unsafe { raw.get_byte(1337) }.unwrap();
     /// println!("{}", byte);
@@ -208,7 +208,7 @@ impl PiControlRaw {
     ///
     /// # Examples
     /// ```no_run
-    /// # use revpi::picontrol::raw::PiControlRaw;
+    /// # use revpi::raw::PiControlRaw;
     /// let raw = PiControlRaw::new().unwrap();
     /// let word = unsafe { raw.get_word(1337) }.unwrap();
     /// println!("{}", word);
@@ -231,7 +231,7 @@ impl PiControlRaw {
     ///
     /// # Examples
     /// ```no_run
-    /// # use revpi::picontrol::raw::PiControlRaw;
+    /// # use revpi::raw::PiControlRaw;
     /// let raw = PiControlRaw::new().unwrap();
     /// let dword = unsafe { raw.get_dword(1337) }.unwrap();
     /// println!("{}", dword);
@@ -277,16 +277,11 @@ impl PiControlRaw {
     ///
     /// # Examples
     /// ```no_run
-    /// # use revpi::picontrol::raw::PiControlRaw;
+    /// # use revpi::raw::PiControlRaw;
     /// let raw = PiControlRaw::new().unwrap();
     /// unsafe { raw.set_bit(1337, 0, true) }.unwrap();
     /// ```
-    pub unsafe fn set_bit(
-        &self,
-        address: u16,
-        bit: u8,
-        value: bool,
-    ) -> Result<(), PiControlError> {
+    pub unsafe fn set_bit(&self, address: u16, bit: u8, value: bool) -> Result<(), PiControlError> {
         self.set_value(address, bit, value as u8)
     }
 
@@ -305,7 +300,7 @@ impl PiControlRaw {
     ///
     /// # Examples
     /// ```no_run
-    /// # use revpi::picontrol::raw::PiControlRaw;
+    /// # use revpi::raw::PiControlRaw;
     /// let raw = PiControlRaw::new().unwrap();
     /// unsafe { raw.set_byte(1337, 42) }.unwrap();
     /// ```
@@ -325,7 +320,7 @@ impl PiControlRaw {
     ///
     /// # Examples
     /// ```no_run
-    /// # use revpi::picontrol::raw::PiControlRaw;
+    /// # use revpi::raw::PiControlRaw;
     /// let raw = PiControlRaw::new().unwrap();
     /// unsafe { raw.set_word(1337, 42) }.unwrap();
     /// ```
@@ -347,7 +342,7 @@ impl PiControlRaw {
     ///
     /// # Examples
     /// ```no_run
-    /// # use revpi::picontrol::raw::PiControlRaw;
+    /// # use revpi::raw::PiControlRaw;
     /// let raw = PiControlRaw::new().unwrap();
     /// unsafe { raw.set_word(1337, 42) }.unwrap();
     /// ```
@@ -371,7 +366,7 @@ impl PiControlRaw {
     ///
     /// # Examples
     /// ```no_run
-    /// # use revpi::picontrol::raw::PiControlRaw;
+    /// # use revpi::raw::PiControlRaw;
     /// use std::ffi::CString;
     /// let raw = PiControlRaw::new().unwrap();
     /// let var = raw.find_variable(&CString::new("test").unwrap()).unwrap();
@@ -406,8 +401,8 @@ impl PiControlRaw {
     ///
     /// # Examples
     /// ```no_run
-    /// # use revpi::picontrol::raw::PiControlRaw;
-    /// use revpi::picontrol::raw::raw::KB_PI_LEN;
+    /// # use revpi::raw::PiControlRaw;
+    /// use revpi::raw::raw::KB_PI_LEN;
     /// let raw = PiControlRaw::new().unwrap();
     /// let image = [0; KB_PI_LEN]; // this would ofc be a bad idea
     /// unsafe { raw.set_exported_outputs(&image) };
@@ -433,7 +428,7 @@ impl PiControlRaw {
     ///
     /// # Examples
     /// ```no_run
-    /// # use revpi::picontrol::raw::PiControlRaw;
+    /// # use revpi::raw::PiControlRaw;
     /// let raw = PiControlRaw::new().unwrap();
     /// unsafe { raw.update_device_firmware(31) };
     /// ```
@@ -463,7 +458,7 @@ impl PiControlRaw {
     ///
     /// # Examples
     /// ```no_run
-    /// # use revpi::picontrol::raw::PiControlRaw;
+    /// # use revpi::raw::PiControlRaw;
     /// let raw = PiControlRaw::new().unwrap();
     /// raw.dio_reset_counter(31, 0b10011001_01100110).unwrap();
     /// ```
@@ -487,7 +482,7 @@ impl PiControlRaw {
     ///
     /// # Examples
     /// ```no_run
-    /// # use revpi::picontrol::raw::PiControlRaw;
+    /// # use revpi::raw::PiControlRaw;
     /// let raw = PiControlRaw::new().unwrap();
     /// let msg = raw.get_last_message();
     /// println!("{}", msg.into_string().unwrap());
@@ -518,7 +513,7 @@ impl PiControlRaw {
     ///
     /// # Examples
     /// ```no_run
-    /// # use revpi::picontrol::raw::PiControlRaw;
+    /// # use revpi::raw::PiControlRaw;
     /// let raw = PiControlRaw::new().unwrap();
     /// raw.stop_io();
     /// ```
@@ -530,7 +525,7 @@ impl PiControlRaw {
     ///
     /// # Examples
     /// ```no_run
-    /// # use revpi::picontrol::raw::PiControlRaw;
+    /// # use revpi::raw::PiControlRaw;
     /// let raw = PiControlRaw::new().unwrap();
     /// raw.start_io();
     /// ```
@@ -542,7 +537,7 @@ impl PiControlRaw {
     ///
     /// # Examples
     /// ```no_run
-    /// # use revpi::picontrol::raw::PiControlRaw;
+    /// # use revpi::raw::PiControlRaw;
     /// let raw = PiControlRaw::new().unwrap();
     /// raw.toggle_io();
     /// ```
@@ -557,7 +552,7 @@ impl PiControlRaw {
     ///
     /// # Examples
     /// ```no_run
-    /// # use revpi::picontrol::raw::PiControlRaw;
+    /// # use revpi::raw::PiControlRaw;
     /// let raw = PiControlRaw::new().unwrap();
     /// raw.set_output_watchdog(20);
     /// ```
@@ -571,7 +566,7 @@ impl PiControlRaw {
     ///
     /// # Examples
     /// ```no_run
-    /// # use revpi::picontrol::raw::{PiControlRaw, raw};
+    /// # use revpi::raw::{PiControlRaw, raw};
     /// use raw::Event;
     /// let raw = PiControlRaw::new().unwrap();
     /// let event = raw.wait_for_event();
