@@ -136,10 +136,7 @@ impl Parse for JsonInput {
         let name = input.parse()?;
         input.parse::<Token!(,)>()?;
         let path = input.parse()?;
-        Ok(JsonInput {
-            name,
-            path,
-        })
+        Ok(JsonInput { name, path })
     }
 }
 
@@ -162,7 +159,7 @@ fn get_fn(mod_offset: u64, item: &InOutMem) -> TokenStream2 {
     };
 
     format!(
-        "pub fn {}(&self) -> Result<{}, revpi::picontrol::PiControlError> {{
+        "pub fn {}(&self) -> Result<{}, revpi::PiControlError> {{
     unsafe {{ self.inner.{}({}) }}
 }}",
         name, ret, function, fnargs
@@ -181,11 +178,7 @@ fn set_fn(mod_offset: u64, item: &InOutMem) -> TokenStream2 {
         1 => (
             "bit: bool",
             "set_bit",
-            format!(
-                "{}, {}, bit",
-                address,
-                item.bit_position.unwrap()
-            ),
+            format!("{}, {}, bit", address, item.bit_position.unwrap()),
         ),
         8 => ("byte: u8", "set_byte", format!("{}, byte", address)),
         16 => ("word: u16", "set_word", format!("{}, word", address)),
@@ -194,7 +187,7 @@ fn set_fn(mod_offset: u64, item: &InOutMem) -> TokenStream2 {
     };
 
     format!(
-        "pub fn {}(&self, {}) -> Result<(), revpi::picontrol::PiControlError> {{
+        "pub fn {}(&self, {}) -> Result<(), revpi::PiControlError> {{
     unsafe {{ self.inner.{}({}) }}
 }}",
         name, args, function, fnargs
@@ -220,12 +213,12 @@ fn from_json(rsc: &RSC, name: Ident) -> TokenStream2 {
         }
     }
     quote!(struct #name {
-        inner: revpi::picontrol::raw::PiControlRaw,
+        inner: revpi::raw::PiControlRaw,
     }
     impl #name {
-        pub fn new() -> Result<Self, revpi::picontrol::PiControlError> {
+        pub fn new() -> Result<Self, revpi::PiControlError> {
             Ok(Self {
-                inner: revpi::picontrol::raw::PiControlRaw::new()?,
+                inner: revpi::raw::PiControlRaw::new()?,
             })
         }
 
