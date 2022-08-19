@@ -9,7 +9,7 @@ This crate lets you control your [RevolutionPi](https://revolutionpi.com/) with 
 revpi-rs provides multiple ways to interface with piControl, the easiest being the `PiControl` struct:
 
 ```rust
-use revpi::picontrol::{PiControl, Value};
+use revpi::{PiControl, Value};
 
 let pi = PiControl::new().unwrap();
 pi.set_value("RevPiLED", Value::Byte(42)).unwrap();
