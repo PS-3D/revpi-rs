@@ -44,6 +44,22 @@ impl PiControlRaw {
         Ok(PiControlRaw(File::open("/dev/piControl0")?))
     }
 
+    /// Tries to clone the underlying file and thus the PiControlRaw object.
+    ///
+    /// # Errors
+    /// Returns a [`PiControlError::IoError`] if cloning `"/dev/piControl0"` fails.
+    /// (In theory this shouldn't if opening the file succeeded, but nevertheless)
+    ///
+    /// # Examples
+    /// ```no_run
+    /// # use revpi::raw::PiControlRaw;
+    /// let raw1 = PiControlRaw::new().unwrap();
+    /// let raw2 = raw1.try_clone().unwrap();
+    /// ```
+    pub fn try_clone(&self) -> Result<Self, PiControlError> {
+        Ok(PiControlRaw(self.0.try_clone()?))
+    }
+
     // every error could also be EINVAL if argp or request in ioctl is invalid, but that shouldn't be possible
     // could also be EFAULT if argp is inaccessible or fd is invalid, also left out where not possible
 

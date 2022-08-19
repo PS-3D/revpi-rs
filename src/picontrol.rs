@@ -104,6 +104,24 @@ impl PiControl {
         })
     }
 
+    /// Tries to clone the underlying file and thus the PiControl object.
+    ///
+    /// # Errors
+    /// Returns a [`PiControlError::IoError`] if cloning `"/dev/piControl0"` fails.
+    /// (In theory this shouldn't if opening the file succeeded, but nevertheless)
+    ///
+    /// # Examples
+    /// ```no_run
+    /// # use revpi::PiControl;
+    /// let pi1 = PiControl::new().unwrap();
+    /// let pi2 = pi1.try_clone().unwrap();
+    /// ```
+    pub fn try_clone(&self) -> Result<Self, PiControlError> {
+        Ok(Self {
+            inner: self.inner.try_clone()?,
+        })
+    }
+
     fn find_variable(&self, name: &str) -> Result<SPIVariable, PiControlError> {
         self.inner
             .find_variable(&CString::new(name).map_err(PiControlError::from)?)
