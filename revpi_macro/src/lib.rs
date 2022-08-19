@@ -234,7 +234,7 @@ fn from_json(rsc: &RSC, name: Ident) -> TokenStream2 {
     .into()
 }
 
-/// See the [crate documentation](revpi_macro)
+/// See the [crate documentation](self)
 #[proc_macro]
 pub fn revpi_from_json(stream: TokenStream) -> TokenStream {
     let input = parse_macro_input!(stream as JsonInput);
@@ -243,7 +243,7 @@ pub fn revpi_from_json(stream: TokenStream) -> TokenStream {
     from_json(&rsc, input.name).into()
 }
 
-/// See the [crate documentation](revpi_macro)
+/// See the [crate documentation](self)
 #[proc_macro]
 pub fn revpi(stream: TokenStream) -> TokenStream {
     let name = parse_macro_input!(stream as Ident);
