@@ -10,8 +10,17 @@
 //! [`revpi_from_json!`] reads it from a given path.
 //!
 //! # Usage
-//! [`revpi!`] just needs the name of the struct it should produce, while
-//! [`revpi_from_json!`] also needs a path to an rsc file.
+//! [`revpi!`] just needs the visibility and name of the struct it should produce, while
+//! [`revpi_from_json!`] also needs a path to an rsc file:
+//! ```ignore
+//! revpi!(pub RevPi);
+//! ```
+//! ```ignore
+//! revpi!(RevPi);
+//! ```
+//! ```ignore
+//! revpi_from_json!(pub(self) RevPi, "config.rsc");
+//! ```
 //!
 //! # Output
 //! Both output a struct with the given name. That struct contains functions
@@ -124,19 +133,21 @@ use quote::{format_ident, quote};
 use revpi_rsc::{InOutMem, RSC};
 use serde_json;
 use std::fs::File;
-use syn::{parse::Parse, parse_macro_input, Ident, LitStr, Token};
+use syn::{parse::Parse, parse_macro_input, Ident, LitStr, Token, Visibility};
 
 struct JsonInput {
+    vis: Visibility,
     name: Ident,
     path: LitStr,
 }
 
 impl Parse for JsonInput {
     fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
+        let vis = input.parse()?;
         let name = input.parse()?;
         input.parse::<Token!(,)>()?;
         let path = input.parse()?;
-        Ok(JsonInput { name, path })
+        Ok(Self { vis, name, path })
     }
 }
 
@@ -197,7 +208,7 @@ fn set_fn(mod_offset: u64, item: &InOutMem) -> TokenStream2 {
 }
 
 // produce the struct and impl withe the given name from the given rsc
-fn from_json(rsc: &RSC, name: Ident) -> TokenStream2 {
+fn from_json(rsc: &RSC, vis: Visibility, name: Ident) -> TokenStream2 {
     let mut functions = TokenStream2::default();
     for d in rsc.devices.iter() {
         for i in d.inp.values() {
@@ -212,7 +223,7 @@ fn from_json(rsc: &RSC, name: Ident) -> TokenStream2 {
             functions.extend(set_fn(d.offset, m));
         }
     }
-    quote!(struct #name {
+    quote!(#vis struct #name {
         inner: revpi::raw::PiControlRaw,
     }
     #[allow(non_snake_case)]
@@ -234,18 +245,31 @@ pub fn revpi_from_json(stream: TokenStream) -> TokenStream {
     let input = parse_macro_input!(stream as JsonInput);
     let f = File::open(input.path.value()).unwrap();
     let rsc: RSC = serde_json::from_reader(f).unwrap();
-    from_json(&rsc, input.name).into()
+    from_json(&rsc, input.vis, input.name).into()
+}
+
+struct DefaultInput {
+    vis: Visibility,
+    name: Ident,
+}
+
+impl Parse for DefaultInput {
+    fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
+        let vis = input.parse()?;
+        let name = input.parse()?;
+        Ok(Self { vis, name })
+    }
 }
 
 /// See the [crate documentation](self)
 #[proc_macro]
 pub fn revpi(stream: TokenStream) -> TokenStream {
-    let name = parse_macro_input!(stream as Ident);
+    let input = parse_macro_input!(stream as DefaultInput);
     // on older models the file can still under /opt so we gotta check for that
     let f = match File::open("/etc/revpi/config.rsc") {
         Ok(f) => f,
         Err(_) => File::open("/opt/KUNBUS/config.rsc").unwrap(),
     };
     let rsc: RSC = serde_json::from_reader(f).unwrap();
-    from_json(&rsc, name).into()
+    from_json(&rsc, input.vis, input.name).into()
 }
