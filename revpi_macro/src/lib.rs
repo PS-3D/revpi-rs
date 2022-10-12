@@ -34,14 +34,14 @@
 //! where `<type>` is the type of the field they read out. So a getter could look
 //! like this:
 //! ```ignore
-//! pub fn get_RevPiStatus() -> Result<u8, PiControlError> {...}
+//! pub fn get_RevPiStatus(&self) -> Result<u8, PiControlError> {...}
 //! ```
 //! ## Setters
 //! Setters take an argument, the type of which depends on the type of field they
 //! set. They return `Result<(), PiControlError>`. So a setter could look like
 //! this:
 //! ```ignore
-//! pub fn set_RevPiLED(byte: u8) -> Result<(), PiControlError> {...}
+//! pub fn set_RevPiLED(&self, byte: u8) -> Result<(), PiControlError> {...}
 //! ```
 //!
 //! # Examples
@@ -118,11 +118,13 @@
 //! struct RevPi {...}
 //!
 //! impl RevPi {
-//!     pub fn get_RevPiStatus() -> Result<u8, PiControlError> {...}
-//!     pub fn get_RevPiLED() -> Result<u8, PiControlError> {...}
-//!     pub fn set_RevPiLED(byte: u8) -> Result<(), PiControlError> {...}
-//!     pub fn get_RS485ErrorLimit1() -> Result<u16, PiControlError> {...}
-//!     pub fn set_RS485ErrorLimit1(word: u16) -> Result<(), PiControlError> {...}
+//!     pub fn new() -> Result<Self, PiControlError> {...}
+//!     pub fn try_clone() -> Result<Self, PiControlError> {...}
+//!     pub fn get_RevPiStatus(&self) -> Result<u8, PiControlError> {...}
+//!     pub fn get_RevPiLED(&self) -> Result<u8, PiControlError> {...}
+//!     pub fn set_RevPiLED(&self, byte: u8) -> Result<(), PiControlError> {...}
+//!     pub fn get_RS485ErrorLimit1(&self) -> Result<u16, PiControlError> {...}
+//!     pub fn set_RS485ErrorLimit1(&self, word: u16) -> Result<(), PiControlError> {...}
 //! }
 //! ```
 //!
@@ -226,11 +228,18 @@ fn from_json(rsc: &RSC, vis: Visibility, name: Ident) -> TokenStream2 {
     quote!(#vis struct #name {
         inner: revpi::raw::PiControlRaw,
     }
+
     #[allow(non_snake_case)]
     impl #name {
         pub fn new() -> std::result::Result<Self, revpi::PiControlError> {
-            Ok(Self {
+            std::result::Result::Ok(Self {
                 inner: revpi::raw::PiControlRaw::new()?,
+            })
+        }
+
+        pub fn try_clone(&self) -> std::result::Result<Self, revpi::PiControlError> {
+            std::result::Result::Ok(Self {
+                inner: self.inner.try_clone()?,
             })
         }
 
