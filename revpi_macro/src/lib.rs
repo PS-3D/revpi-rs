@@ -134,7 +134,7 @@ use proc_macro2::TokenStream as TokenStream2;
 use quote::{format_ident, quote};
 use revpi_rsc::{InOutMem, RSC};
 use serde_json;
-use std::fs::File;
+use std::{fs::File, io::ErrorKind as IoErrorKind};
 use syn::{parse::Parse, parse_macro_input, Ident, LitStr, Token, Visibility};
 
 struct JsonInput {
@@ -276,8 +276,11 @@ pub fn revpi(stream: TokenStream) -> TokenStream {
     let input = parse_macro_input!(stream as DefaultInput);
     // on older models the file can still under /opt so we gotta check for that
     let f = match File::open("/etc/revpi/config.rsc") {
-        Ok(f) => f,
-        Err(_) => File::open("/opt/KUNBUS/config.rsc").unwrap(),
+        // only check old path if new path was not found
+        Err(e) if e.kind() == IoErrorKind::NotFound => {
+            File::open("/opt/KUNBUS/config.rsc").unwrap()
+        }
+        r => r.unwrap(),
     };
     let rsc: RSC = serde_json::from_reader(f).unwrap();
     from_json(&rsc, input.vis, input.name).into()
